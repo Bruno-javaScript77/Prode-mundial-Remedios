@@ -82,7 +82,6 @@ export default function App() {
   // CALCULAR PUNTOS
   function calcularPuntos(prediccion, partido) {
 
-    // resultado exacto
     if (
       prediccion.goles_local === partido.goles_local &&
       prediccion.goles_visitante === partido.goles_visitante
@@ -98,7 +97,6 @@ export default function App() {
       partido.goles_local -
       partido.goles_visitante;
 
-    // ganador correcto
     if (
       (diferenciaPred > 0 && diferenciaReal > 0) ||
       (diferenciaPred < 0 && diferenciaReal < 0) ||
@@ -164,114 +162,116 @@ export default function App() {
     }
 
   }, [partidos, prediccionesGuardadas]);
+  
+return (
 
-  return (
+  <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-950 text-white p-6">
 
-    <div className="min-h-screen bg-slate-900 text-white p-6">
+    <div className="max-w-5xl mx-auto">
 
-      <div className="max-w-5xl mx-auto">
+      <h1 className="text-6xl font-extrabold text-center mb-12 tracking-tight">
+        ⚽ Prode Mundial 2026
+      </h1>
 
-        <h1 className="text-5xl font-bold text-center mb-10">
-          ⚽ Prode Mundial
-        </h1>
+      {/* NOMBRE */}
+      <input
+        type="text"
+        placeholder="Tu nombre"
+        value={usuario}
+        onChange={(e) => setUsuario(e.target.value)}
+        className="w-full p-4 rounded-2xl bg-white text-black mb-8 text-lg font-semibold shadow-xl outline-none"
+      />
 
-        {/* NOMBRE */}
-        <input
-          type="text"
-          placeholder="Tu nombre"
-          value={usuario}
-          onChange={(e) => setUsuario(e.target.value)}
-          className="w-full p-4 rounded-xl text-black mb-8"
-        />
+      {/* PARTIDOS */}
+      <div className="space-y-6">
 
-        {/* PARTIDOS */}
-        <div className="space-y-6">
+        {partidos.map((partido) => (
 
-          {partidos.map((partido) => (
+          <div
+            key={partido.id}
+            className="bg-white/10 backdrop-blur-md border border-white/10 shadow-2xl p-6 rounded-3xl flex items-center justify-between gap-4 hover:scale-[1.01] transition-all duration-300"
+          >
 
-            <div
-              key={partido.id}
-              className="bg-slate-800 p-6 rounded-2xl flex items-center justify-between gap-4"
-            >
+            <span className="font-bold text-lg w-36">
+              {partido.local}
+            </span>
 
-              <span className="font-bold w-32">
-                {partido.local}
-              </span>
+            <input
+              type="number"
+              min="0"
+              className="w-20 p-3 rounded-2xl bg-white text-black text-center font-bold text-lg shadow-inner"
+              onChange={(e) =>
+                actualizarPrediccion(
+                  partido.id,
+                  "local",
+                  e.target.value
+                )
+              }
+            />
 
-              <input
-                type="number"
-                min="0"
-                className="w-20 p-3 rounded-xl text-black text-center"
-                onChange={(e) =>
-                  actualizarPrediccion(
-                    partido.id,
-                    "local",
-                    e.target.value
-                  )
-                }
-              />
+            <span className="font-black text-xl text-slate-300">
+              VS
+            </span>
 
-              <span className="font-bold">
-                VS
-              </span>
+            <input
+              type="number"
+              min="0"
+              className="w-20 p-3 rounded-2xl bg-white text-black text-center font-bold text-lg shadow-inner"
+              onChange={(e) =>
+                actualizarPrediccion(
+                  partido.id,
+                  "visitante",
+                  e.target.value
+                )
+              }
+            />
 
-              <input
-                type="number"
-                min="0"
-                className="w-20 p-3 rounded-xl text-black text-center"
-                onChange={(e) =>
-                  actualizarPrediccion(
-                    partido.id,
-                    "visitante",
-                    e.target.value
-                  )
-                }
-              />
+            <span className="font-bold text-lg w-36 text-right">
+              {partido.visitante}
+            </span>
 
-              <span className="font-bold w-32 text-right">
-                {partido.visitante}
-              </span>
+          </div>
+        ))}
 
-            </div>
-          ))}
+      </div>
 
-        </div>
+      {/* BOTON */}
+      <button
+        onClick={guardarPredicciones}
+        className="w-full bg-gradient-to-r from-green-500 to-emerald-600 hover:scale-[1.02] hover:from-green-400 hover:to-emerald-500 transition-all duration-300 p-5 rounded-3xl font-bold mt-10 shadow-2xl text-xl"
+      >
+        Guardar Predicciones
+      </button>
 
-        {/* BOTON */}
-        <button
-          onClick={guardarPredicciones}
-          className="w-full bg-green-600 hover:bg-green-700 p-4 rounded-2xl font-bold mt-8"
-        >
-          Guardar Predicciones
-        </button>
+      {/* MENSAJE */}
+      <p className="text-center mt-6 text-2xl font-bold text-green-400">
+        {mensaje}
+      </p>
 
-        {/* MENSAJE */}
-        <p className="text-center mt-6 text-xl font-bold">
-          {mensaje}
-        </p>
+      {/* TABLA PREDICCIONES */}
+      <div className="bg-white/10 backdrop-blur-md border border-white/10 shadow-2xl p-6 rounded-3xl mt-12">
 
-        {/* TABLA PREDICCIONES */}
-        <div className="bg-slate-800 p-6 rounded-2xl mt-10">
+        <h2 className="text-3xl font-bold mb-6">
+          📋 Predicciones Guardadas
+        </h2>
 
-          <h2 className="text-2xl font-bold mb-6">
-            Predicciones Guardadas
-          </h2>
+        <div className="overflow-hidden rounded-2xl">
 
           <table className="w-full">
 
             <thead>
 
-              <tr className="border-b border-slate-600">
+              <tr className="bg-white/10">
 
-                <th className="text-left p-3">
+                <th className="text-left p-4">
                   Usuario
                 </th>
 
-                <th className="text-center p-3">
+                <th className="text-center p-4">
                   Partido
                 </th>
 
-                <th className="text-center p-3">
+                <th className="text-center p-4">
                   Predicción
                 </th>
 
@@ -291,18 +291,18 @@ export default function App() {
 
                   <tr
                     key={prediccion.id}
-                    className="border-b border-slate-700"
+                    className="border-b border-white/10 hover:bg-white/5 transition-all"
                   >
 
-                    <td className="p-3">
+                    <td className="p-4 font-semibold">
                       {prediccion.usuario}
                     </td>
 
-                    <td className="p-3 text-center">
+                    <td className="p-4 text-center">
                       {partido?.local} vs {partido?.visitante}
                     </td>
 
-                    <td className="p-3 text-center font-bold">
+                    <td className="p-4 text-center font-black text-green-400">
                       {prediccion.goles_local}
                       {" - "}
                       {prediccion.goles_visitante}
@@ -318,28 +318,32 @@ export default function App() {
 
         </div>
 
-        {/* TABLA POSICIONES */}
-        <div className="bg-slate-800 p-6 rounded-2xl mt-10">
+      </div>
 
-          <h2 className="text-2xl font-bold mb-6">
-            🏆 Tabla de Posiciones
-          </h2>
+      {/* TABLA POSICIONES */}
+      <div className="bg-white/10 backdrop-blur-md border border-white/10 shadow-2xl p-6 rounded-3xl mt-12">
+
+        <h2 className="text-3xl font-bold mb-6">
+          🏆 Tabla de Posiciones
+        </h2>
+
+        <div className="overflow-hidden rounded-2xl">
 
           <table className="w-full">
 
             <thead>
 
-              <tr className="border-b border-slate-600">
+              <tr className="bg-white/10">
 
-                <th className="text-left p-3">
+                <th className="text-left p-4">
                   Posición
                 </th>
 
-                <th className="text-left p-3">
+                <th className="text-left p-4">
                   Usuario
                 </th>
 
-                <th className="text-right p-3">
+                <th className="text-right p-4">
                   Puntos
                 </th>
 
@@ -353,18 +357,18 @@ export default function App() {
 
                 <tr
                   key={jugador.usuario}
-                  className="border-b border-slate-700"
+                  className="border-b border-white/10 hover:bg-white/5 transition-all"
                 >
 
-                  <td className="p-3 font-bold">
+                  <td className="p-4 font-black text-yellow-400">
                     #{index + 1}
                   </td>
 
-                  <td className="p-3">
+                  <td className="p-4 font-semibold">
                     {jugador.usuario}
                   </td>
 
-                  <td className="p-3 text-right font-bold">
+                  <td className="p-4 text-right font-black text-green-400">
                     {jugador.puntos}
                   </td>
 
@@ -380,5 +384,7 @@ export default function App() {
       </div>
 
     </div>
-  );
+
+  </div>
+);
 }
