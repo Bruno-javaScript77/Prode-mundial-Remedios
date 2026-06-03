@@ -4,6 +4,7 @@ import { supabase } from "./supabase";
 export default function App() {
 
   const [usuario, setUsuario] = useState("");
+  const [rama, setRama] = useState("");
   const [mensaje, setMensaje] = useState("");
 
   const [partidos, setPartidos] = useState([]);
@@ -42,42 +43,50 @@ export default function App() {
   }
 
   // GUARDAR PREDICCIONES
-  async function guardarPredicciones() {
+async function guardarPredicciones() {
 
-    for (const partido of partidos) {
-
-      const prediccion = predicciones[partido.id];
-
-      if (!prediccion) continue;
-
-      await supabase
-        .from("predicciones")
-        .insert([
-          {
-            usuario: usuario,
-            partido_id: partido.id,
-            goles_local: Number(prediccion.local),
-            goles_visitante: Number(prediccion.visitante),
-          },
-        ]);
-    }
-
-    setMensaje("✅ Predicciones guardadas");
-
-    obtenerPredicciones();
+  if (!usuario || !rama) {
+    setMensaje("⚠️ Completá nombre y rama");
+    return;
   }
 
-  // ACTUALIZAR INPUTS
-  function actualizarPrediccion(id, equipo, valor) {
+  for (const partido of partidos) {
 
-    setPredicciones({
-      ...predicciones,
-      [id]: {
-        ...predicciones[id],
-        [equipo]: valor,
-      },
-    });
+    const prediccion = predicciones[partido.id];
+
+    if (!prediccion) continue;
+
+    await supabase
+      .from("predicciones")
+      .insert([
+        {
+          usuario: usuario,
+          rama: rama,
+          partido_id: partido.id,
+          goles_local: Number(prediccion.local),
+          goles_visitante: Number(prediccion.visitante),
+        },
+      ]);
   }
+
+  setMensaje("✅ Predicciones guardadas");
+
+  obtenerPredicciones();
+}
+
+// ACTUALIZAR INPUTS
+function actualizarPrediccion(id, equipo, valor) {
+
+  setPredicciones({
+    ...predicciones,
+    [id]: {
+      ...predicciones[id],
+      [equipo]: valor,
+    },
+  });
+
+}
+
 
   // CALCULAR PUNTOS
   function calcularPuntos(prediccion, partido) {
@@ -162,6 +171,8 @@ export default function App() {
     }
 
   }, [partidos, prediccionesGuardadas]);
+
+   console.log(partidos);
   
 return (
 
@@ -174,13 +185,28 @@ return (
       </h1>
 
       {/* NOMBRE */}
-      <input
-        type="text"
-        placeholder="Tu nombre"
-        value={usuario}
-        onChange={(e) => setUsuario(e.target.value)}
-        className="w-full p-4 rounded-2xl bg-white text-black mb-8 text-lg font-semibold shadow-xl outline-none"
-      />
+<input
+  type="text"
+  placeholder="Tu nombre"
+  value={usuario}
+  onChange={(e) => setUsuario(e.target.value)}
+  className="w-full p-4 rounded-2xl bg-white text-black mb-8 text-lg font-semibold shadow-xl outline-none"
+/>
+
+{/* RAMA */}
+<select
+  value={rama}
+  onChange={(e) => setRama(e.target.value)}
+  className="w-full p-4 rounded-2xl bg-white text-black mb-8 text-lg font-semibold shadow-xl"
+>
+  <option value="">Seleccionar rama</option>
+  <option value="Manada">Manada</option>
+  <option value="Unidad">Unidad</option>
+  <option value="Caminantes">Caminantes</option>
+  <option value="Rovers">Rovers</option>
+  <option value="Dirigentes">Dirigentes</option>
+</select>
+
 
       {/* PARTIDOS */}
       <div className="space-y-6">
