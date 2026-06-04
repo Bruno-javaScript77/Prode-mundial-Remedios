@@ -7,7 +7,7 @@ export default function App() {
   const [rama, setRama] = useState("");
   const [mensaje, setMensaje] = useState("");
   const [busqueda, setBusqueda] = useState("");
-  const [jornadaSeleccionada, setJornadaSeleccionada] = useState("Jornada 1");
+  const [fechaSeleccionada, setFechaSeleccionada] = useState("Fecha 1");
 
   const [partidos, setPartidos] = useState([]);
   const [predicciones, setPredicciones] = useState({});
@@ -377,14 +377,14 @@ return (
 
       {/* SELECTOR DE JORNADAS */}
       <div className="flex gap-2 overflow-x-auto pb-4 mb-8 no-scrollbar">
-        {Array.from(new Set(partidos.map((p) => p.jornada || "Sin Jornada")))
+        {Array.from(new Set(partidos.map((p) => p.fecha || "Sin Fecha")))
           .sort()
           .map((j) => (
             <button
               key={j}
-              onClick={() => setJornadaSeleccionada(j)}
+              onClick={() => setFechaSeleccionada(j)}
               className={`px-6 py-2 rounded-full font-bold transition-all whitespace-nowrap ${
-                jornadaSeleccionada === j
+                fechaSeleccionada === j
                   ? "bg-green-500 text-white shadow-lg scale-105"
                   : "bg-white/10 text-slate-300 hover:bg-white/20"
               }`}
@@ -395,16 +395,31 @@ return (
       </div>
 
       {/* PARTIDOS */}
-      <div className="space-y-6">
-
-        {partidos
-          .filter((p) => (p.jornada || "Sin Jornada") === jornadaSeleccionada)
-          .map((partido) => (
-
-          <div
-            key={partido.id}
-            className="bg-white/10 backdrop-blur-md border border-white/10 shadow-2xl p-6 rounded-3xl flex items-center justify-between gap-4 hover:scale-[1.01] transition-all duration-300"
-          >
+      <div className="space-y-12">
+        {Object.entries(
+          partidos
+            .filter((p) => (p.fecha || "Sin Fecha") === fechaSeleccionada)
+            .reduce((acc, p) => {
+              const dia = p.dia || "Fecha por confirmar";
+              if (!acc[dia]) acc[dia] = [];
+              acc[dia].push(p);
+              return acc;
+            }, {})
+        ).map(([dia, partidosDia]) => (
+          <div key={dia} className="space-y-6">
+            <h3 className="text-xl font-bold text-slate-400 border-b border-white/10 pb-2 flex items-center gap-2">
+              📅 {dia}
+            </h3>
+            
+            {partidosDia.map((partido) => (
+              <div
+                key={partido.id}
+                className="relative bg-white/10 backdrop-blur-md border border-white/10 shadow-2xl p-6 rounded-3xl flex items-center justify-between gap-4 hover:scale-[1.01] transition-all duration-300"
+              >
+                {/* HORARIO */}
+                <div className="absolute -top-3 left-6 bg-green-500 text-white text-[10px] font-black px-2 py-0.5 rounded-full shadow-lg uppercase tracking-tighter">
+                  {partido.horario || "--:--"}
+                </div>
 
             <span className="font-bold text-lg w-36 flex items-center gap-2">
               {codigosBanderas[partido.local] ? (
@@ -459,8 +474,9 @@ return (
             </span>
 
           </div>
+            ))}
+          </div>
         ))}
-
       </div>
 
       {/* BOTON */}
