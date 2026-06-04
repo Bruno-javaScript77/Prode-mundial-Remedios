@@ -24,6 +24,29 @@ export default function App() {
     Dirigentes: "🧭",
   };
 
+  const banderas = {
+    México: "🇲🇽",
+    Sudáfrica: "🇿🇦",
+    "Corea del Sur": "🇰🇷",
+    "República Checa": "🇨🇿",
+    Canadá: "🇨🇦",
+    "Bosnia y Herzegovina": "🇧🇦",
+    "Estados Unidos": "🇺🇸",
+    Paraguay: "🇵🇾",
+    Haití: "🇭🇹",
+    Escocia: "🏴󠁧󠁢󠁳󠁣󠁴󠁿",
+    España: "🇪🇸",
+    "Cabo Verde": "🇨🇻",
+    Argentina: "🇦🇷",
+    Argelia: "🇩🇿",
+    Brasil: "🇧🇷",
+    Marruecos: "🇲🇦",
+    Qatar: "🇶🇦",
+    Suiza: "🇨🇭",
+    Australia: "🇦🇺",
+    Turquía: "🇹🇷",
+  };
+
   // OBTENER PARTIDOS
   async function obtenerPartidos() {
 
@@ -147,16 +170,17 @@ function actualizarPrediccion(id, equipo, valor) {
       );
 
       if (!tabla[prediccion.usuario]) {
-        tabla[prediccion.usuario] = 0;
+        tabla[prediccion.usuario] = { puntos: 0, rama: prediccion.rama };
       }
 
-      tabla[prediccion.usuario] += puntos;
+      tabla[prediccion.usuario].puntos += puntos;
     });
 
     const resultado = Object.entries(tabla).map(
-      ([usuario, puntos]) => ({
+      ([usuario, info]) => ({
         usuario,
-        puntos,
+        puntos: info.puntos,
+        rama: info.rama,
       })
     );
 
@@ -244,6 +268,36 @@ return (
         ⚽ Prode Mundial 2026
       </h1>
 
+      {/* ESTADÍSTICAS RÁPIDAS */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-12">
+        <div className="bg-white/10 backdrop-blur-md border border-white/10 p-6 rounded-3xl shadow-xl hover:scale-105 transition-all">
+          <p className="text-slate-400 text-sm font-bold uppercase tracking-wider">👥 Participantes</p>
+          <p className="text-4xl font-black text-white mt-1">{tablaPosiciones.length}</p>
+        </div>
+        <div className="bg-white/10 backdrop-blur-md border border-white/10 p-6 rounded-3xl shadow-xl hover:scale-105 transition-all">
+          <p className="text-slate-400 text-sm font-bold uppercase tracking-wider">⚽ Partidos</p>
+          <p className="text-4xl font-black text-white mt-1">{partidos.length}</p>
+        </div>
+        <div className="bg-white/10 backdrop-blur-md border border-white/10 p-6 rounded-3xl shadow-xl hover:scale-105 transition-all">
+          <p className="text-slate-400 text-sm font-bold uppercase tracking-wider">🏆 Líder Actual</p>
+          <p className="text-2xl font-black text-yellow-400 mt-2 truncate">
+            {tablaPosiciones[0]?.usuario || "---"}
+          </p>
+        </div>
+        <div className="bg-white/10 backdrop-blur-md border border-white/10 p-6 rounded-3xl shadow-xl hover:scale-105 transition-all">
+          <p className="text-slate-400 text-sm font-bold uppercase tracking-wider">🔥 Rama Líder</p>
+          <p className="text-2xl font-black text-green-400 mt-2 truncate">
+            {Object.entries(tablaPorRama).length > 0 
+              ? Object.entries(tablaPorRama).sort((a, b) => {
+                  const sumaA = a[1].reduce((acc, curr) => acc + curr.puntos, 0);
+                  const sumaB = b[1].reduce((acc, curr) => acc + curr.puntos, 0);
+                  return sumaB - sumaA;
+                })[0][0]
+              : "---"}
+          </p>
+        </div>
+      </div>
+
       {/* NOMBRE */}
 <input
   type="text"
@@ -299,8 +353,8 @@ return (
             className="bg-white/10 backdrop-blur-md border border-white/10 shadow-2xl p-6 rounded-3xl flex items-center justify-between gap-4 hover:scale-[1.01] transition-all duration-300"
           >
 
-            <span className="font-bold text-lg w-36">
-              {partido.local}
+            <span className="font-bold text-lg w-36 flex items-center gap-2">
+              {banderas[partido.local] || "🏳️"} {partido.local}
             </span>
 
             <input
@@ -333,8 +387,8 @@ return (
               }
             />
 
-            <span className="font-bold text-lg w-36 text-right">
-              {partido.visitante}
+            <span className="font-bold text-lg w-36 text-right flex items-center justify-end gap-2">
+              {partido.visitante} {banderas[partido.visitante] || "🏳️"}
             </span>
 
           </div>
@@ -419,9 +473,9 @@ return (
                         {prediccion.usuario}
                       </td>
 
-                      <td className="p-4 text-center">
-                        {partido?.local} vs {partido?.visitante}
-                      </td>
+                    <td className="p-4 text-center">
+                      {banderas[partido?.local] || "🏳️"} {partido?.local} vs {partido?.visitante} {banderas[partido?.visitante] || "🏳️"}
+                    </td>
 
                       <td className="p-4 text-center font-black text-green-400">
                         {prediccion.goles_local}
@@ -469,6 +523,10 @@ return (
                   Usuario
                 </th>
 
+                <th className="text-left p-4">
+                  Rama
+                </th>
+
                 <th className="text-right p-4">
                   Puntos
                 </th>
@@ -492,6 +550,12 @@ return (
 
                   <td className="p-4 font-semibold">
                     {jugador.usuario}
+                  </td>
+
+                  <td className="p-4">
+                    <span className="flex items-center gap-2 text-sm text-slate-300">
+                      {emojisRamas[jugador.rama]} {jugador.rama}
+                    </span>
                   </td>
 
                   <td className="p-4 text-right font-black text-green-400">
