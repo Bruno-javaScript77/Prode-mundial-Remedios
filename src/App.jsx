@@ -17,6 +17,7 @@ export default function App() {
   const [tablaPorRama, setTablaPorRama] = useState({});
   const [ramaLider, setRamaLider] = useState("---");
   const [ramaPromedioLider, setRamaPromedioLider] = useState("---");
+  const [mostrarReglas, setMostrarReglas] = useState(false);
 
   const emojisRamas = {
     Manada: "🐺",
@@ -366,49 +367,57 @@ return (
 
     <div className="max-w-5xl mx-auto">
 
-      <h1 className="text-6xl font-extrabold text-center mb-12 tracking-tight">
-        ⚽ Prode Mundial 2026
-      </h1>
 
-      {/* REGLAS Y STATS */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-12">
-        {/* REGLAS */}
-        <div className="lg:col-span-1 bg-white/5 border border-white/10 p-6 rounded-3xl shadow-xl">
-          <h3 className="text-lg font-bold text-green-400 mb-4 flex items-center gap-2">📜 Sistema de Puntos</h3>
-          <ul className="space-y-3 text-sm">
-            <li className="flex justify-between items-center bg-white/5 p-2 rounded-xl border border-white/5">
-              <span>Resultado Exacto</span>
-              <span className="font-bold text-green-400">+3 pts</span>
-            </li>
-            <li className="flex justify-between items-center bg-white/5 p-2 rounded-xl border border-white/5">
-              <span>Ganador / Empate</span>
-              <span className="font-bold text-blue-400">+1 pts</span>
-            </li>
-            <li className="flex justify-between items-center bg-white/5 p-2 rounded-xl border border-white/5 text-slate-500">
-              <span>Sin aciertos</span>
-              <span className="font-bold">0 pts</span>
-            </li>
-          </ul>
+
+      {/* TITULO Y REGLAS */}
+      <div className="flex flex-col items-center mb-12">
+        <h1 className="text-5xl md:text-6xl font-extrabold text-center tracking-tight mb-4">
+          ⚽ Prode Mundial 2026
+        </h1>
+        <button 
+          onClick={() => setMostrarReglas(!mostrarReglas)}
+          className="bg-white/5 hover:bg-white/10 border border-white/10 px-4 py-2 rounded-full text-sm font-bold flex items-center gap-2 transition-all"
+        >
+          {mostrarReglas ? "🔼 Ocultar Reglas" : "📜 Ver Sistema de Puntos"}
+        </button>
+
+        {mostrarReglas && (
+          <div className="mt-4 w-full max-w-md bg-white/5 border border-white/10 p-6 rounded-3xl shadow-2xl animate-in fade-in slide-in-from-top-4 duration-300">
+            <ul className="space-y-3 text-sm">
+              <li className="flex justify-between items-center bg-white/5 p-2 rounded-xl border border-white/5">
+                <span>🎯 Resultado Exacto</span>
+                <span className="font-bold text-green-400">+3 pts</span>
+              </li>
+              <li className="flex justify-between items-center bg-white/5 p-2 rounded-xl border border-white/5">
+                <span>🏆 Ganador / Empate</span>
+                <span className="font-bold text-blue-400">+1 pts</span>
+              </li>
+              <li className="flex justify-between items-center bg-white/5 p-2 rounded-xl border border-white/5 text-slate-500">
+                <span>❌ Sin aciertos</span>
+                <span className="font-bold">0 pts</span>
+              </li>
+            </ul>
+          </div>
+        )}
+      </div>
+
+      {/* STATS CARDS */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-12">
+        <div className="bg-white/10 backdrop-blur-md border border-white/10 p-6 rounded-3xl text-center shadow-xl hover:scale-105 transition-all">
+          <p className="text-slate-400 text-[10px] font-bold uppercase mb-1">👥 Participantes</p>
+          <p className="text-4xl font-black text-white">{tablaPosiciones.length}</p>
         </div>
-
-        {/* STATS CARDS */}
-        <div className="lg:col-span-2 grid grid-cols-2 sm:grid-cols-4 gap-4">
-          <div className="bg-white/10 backdrop-blur-md border border-white/10 p-4 rounded-3xl text-center shadow-xl">
-            <p className="text-slate-400 text-[10px] font-bold uppercase mb-1">👥 Participantes</p>
-            <p className="text-3xl font-black text-white">{tablaPosiciones.length}</p>
-          </div>
-          <div className="bg-white/10 backdrop-blur-md border border-white/10 p-4 rounded-3xl text-center shadow-xl">
-            <p className="text-slate-400 text-[10px] font-bold uppercase mb-1">⚽ Partidos</p>
-            <p className="text-3xl font-black text-white">{partidos.length}</p>
-          </div>
-          <div className="bg-white/10 backdrop-blur-md border border-white/10 p-4 rounded-3xl text-center shadow-xl">
-            <p className="text-slate-400 text-[10px] font-bold uppercase mb-1">🏆 Líder</p>
-            <p className="text-xl font-black text-yellow-400 truncate">{tablaPosiciones[0]?.usuario || "---"}</p>
-          </div>
-          <div className="bg-white/10 backdrop-blur-md border border-white/10 p-4 rounded-3xl text-center shadow-xl">
-            <p className="text-slate-400 text-[10px] font-bold uppercase mb-1">🔥 Rama Lider (Prom)</p>
-            <p className="text-xl font-black text-green-400 truncate">{emojisRamas[ramaPromedioLider]} {ramaPromedioLider}</p>
-          </div>
+        <div className="bg-white/10 backdrop-blur-md border border-white/10 p-6 rounded-3xl text-center shadow-xl hover:scale-105 transition-all">
+          <p className="text-slate-400 text-[10px] font-bold uppercase mb-1">⚽ Partidos</p>
+          <p className="text-4xl font-black text-white">{partidos.length}</p>
+        </div>
+        <div className="bg-white/10 backdrop-blur-md border border-white/10 p-6 rounded-3xl text-center shadow-xl hover:scale-105 transition-all">
+          <p className="text-slate-400 text-[10px] font-bold uppercase mb-1">🏆 Líder</p>
+          <p className="text-2xl font-black text-yellow-400 truncate">{tablaPosiciones[0]?.usuario || "---"}</p>
+        </div>
+        <div className="bg-white/10 backdrop-blur-md border border-white/10 p-6 rounded-3xl text-center shadow-xl hover:scale-105 transition-all">
+          <p className="text-slate-400 text-[10px] font-bold uppercase mb-1">🔥 Rama Lider (Prom)</p>
+          <p className="text-2xl font-black text-green-400 truncate">{emojisRamas[ramaPromedioLider]} {ramaPromedioLider}</p>
         </div>
       </div>
 
