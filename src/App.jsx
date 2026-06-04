@@ -406,74 +406,68 @@ return (
               return acc;
             }, {})
         ).map(([dia, partidosDia]) => (
-          <div key={dia} className="space-y-6">
-            <h3 className="text-xl font-bold text-slate-400 border-b border-white/10 pb-2 flex items-center gap-2">
+          <div key={dia} className="space-y-4">
+            <h3 className="text-lg md:text-xl font-bold text-slate-400 border-b border-white/10 pb-2 flex items-center gap-2">
               📅 {dia}
             </h3>
             
             {partidosDia.map((partido) => (
               <div
                 key={partido.id}
-                className="relative bg-white/10 backdrop-blur-md border border-white/10 shadow-2xl p-6 rounded-3xl flex items-center justify-between gap-4 hover:scale-[1.01] transition-all duration-300"
+                className="relative bg-white/10 backdrop-blur-md border border-white/10 shadow-2xl p-4 md:p-6 rounded-3xl flex flex-col md:flex-row items-center justify-between gap-4 hover:scale-[1.01] transition-all duration-300"
               >
-                {/* HORARIO */}
-                <div className="absolute -top-3 left-6 bg-green-500 text-white text-[10px] font-black px-2 py-0.5 rounded-full shadow-lg uppercase tracking-tighter">
+                <div className="absolute -top-3 left-6 bg-green-500 text-white text-[10px] font-black px-2 py-0.5 rounded-full shadow-lg uppercase tracking-tighter z-10">
                   {partido.horario || "--:--"}
                 </div>
 
-            <span className="font-bold text-lg w-36 flex items-center gap-2">
-              {codigosBanderas[partido.local] ? (
-                <img 
-                  src={`https://flagcdn.com/w40/${codigosBanderas[partido.local]}.png`} 
-                  alt={partido.local}
-                  className="w-6 h-4 object-cover rounded-sm shadow-sm"
-                />
-              ) : "🏳️"} 
-              {partido.local}
-            </span>
+                <div className="flex items-center gap-3 w-full md:w-40 justify-between md:justify-start">
+                  <div className="flex items-center gap-2">
+                    {codigosBanderas[partido.local] ? (
+                      <img src={`https://flagcdn.com/w40/${codigosBanderas[partido.local]}.png`} alt={partido.local} className="w-6 h-4 object-cover rounded-sm shadow-sm" />
+                    ) : "🏳️"} 
+                    <span className="font-bold text-base md:text-lg">{partido.local}</span>
+                  </div>
+                  <input
+                    type="number"
+                    min="0"
+                    placeholder="0"
+                    className="w-14 md:w-20 p-2 md:p-3 rounded-xl bg-white text-black text-center font-bold text-lg shadow-inner md:hidden"
+                    onChange={(e) => actualizarPrediccion(partido.id, "local", e.target.value)}
+                  />
+                </div>
 
-            <input
-              type="number"
-              min="0"
-              className="w-20 p-3 rounded-2xl bg-white text-black text-center font-bold text-lg shadow-inner"
-              onChange={(e) =>
-                actualizarPrediccion(
-                  partido.id,
-                  "local",
-                  e.target.value
-                )
-              }
-            />
+                <div className="hidden md:flex items-center gap-4">
+                  <input
+                    type="number"
+                    min="0"
+                    className="w-20 p-3 rounded-2xl bg-white text-black text-center font-bold text-lg shadow-inner"
+                    onChange={(e) => actualizarPrediccion(partido.id, "local", e.target.value)}
+                  />
+                  <span className="font-black text-xl text-slate-300">VS</span>
+                  <input
+                    type="number"
+                    min="0"
+                    className="w-20 p-3 rounded-2xl bg-white text-black text-center font-bold text-lg shadow-inner"
+                    onChange={(e) => actualizarPrediccion(partido.id, "visitante", e.target.value)}
+                  />
+                </div>
 
-            <span className="font-black text-xl text-slate-300">
-              VS
-            </span>
-
-            <input
-              type="number"
-              min="0"
-              className="w-20 p-3 rounded-2xl bg-white text-black text-center font-bold text-lg shadow-inner"
-              onChange={(e) =>
-                actualizarPrediccion(
-                  partido.id,
-                  "visitante",
-                  e.target.value
-                )
-              }
-            />
-
-            <span className="font-bold text-lg w-36 text-right flex items-center justify-end gap-2">
-              {partido.visitante}
-              {codigosBanderas[partido.visitante] ? (
-                <img 
-                  src={`https://flagcdn.com/w40/${codigosBanderas[partido.visitante]}.png`} 
-                  alt={partido.visitante}
-                  className="w-6 h-4 object-cover rounded-sm shadow-sm"
-                />
-              ) : "🏳️"}
-            </span>
-
-          </div>
+                <div className="flex items-center gap-3 w-full md:w-40 justify-between md:justify-end">
+                  <input
+                    type="number"
+                    min="0"
+                    placeholder="0"
+                    className="w-14 md:w-20 p-2 md:p-3 rounded-xl bg-white text-black text-center font-bold text-lg shadow-inner md:hidden"
+                    onChange={(e) => actualizarPrediccion(partido.id, "visitante", e.target.value)}
+                  />
+                  <div className="flex items-center gap-2">
+                    <span className="font-bold text-base md:text-lg">{partido.visitante}</span>
+                    {codigosBanderas[partido.visitante] ? (
+                      <img src={`https://flagcdn.com/w40/${codigosBanderas[partido.visitante]}.png`} alt={partido.visitante} className="w-6 h-4 object-cover rounded-sm shadow-sm" />
+                    ) : "🏳️"}
+                  </div>
+                </div>
+              </div>
             ))}
           </div>
         ))}
@@ -493,9 +487,9 @@ return (
       </p>
 
       {/* TABLA PREDICCIONES */}
-      <div className="bg-white/10 backdrop-blur-md border border-white/10 shadow-2xl p-6 rounded-3xl mt-12">
+      <div className="bg-white/10 backdrop-blur-md border border-white/10 shadow-2xl p-4 md:p-6 rounded-3xl mt-12">
 
-        <h2 className="text-3xl font-bold mb-6">
+        <h2 className="text-2xl md:text-3xl font-bold mb-6 text-center md:text-left">
           📋 Predicciones Guardadas
         </h2>
 
@@ -509,9 +503,9 @@ return (
         />
 
         {busqueda ? (
-          <div className="overflow-hidden rounded-2xl">
+          <div className="overflow-x-auto rounded-2xl">
 
-            <table className="w-full">
+            <table className="w-full min-w-[500px]">
 
               <thead>
 
@@ -592,15 +586,15 @@ return (
       </div>
 
       {/* TABLA POSICIONES */}
-      <div className="bg-white/10 backdrop-blur-md border border-white/10 shadow-2xl p-6 rounded-3xl mt-12">
+      <div className="bg-white/10 backdrop-blur-md border border-white/10 shadow-2xl p-4 md:p-6 rounded-3xl mt-12">
 
-        <h2 className="text-3xl font-bold mb-6">
+        <h2 className="text-2xl md:text-3xl font-bold mb-6 text-center md:text-left">
           🏆 Tabla de Posiciones
         </h2>
 
-        <div className="overflow-hidden rounded-2xl">
+        <div className="overflow-x-auto rounded-2xl">
 
-          <table className="w-full">
+          <table className="w-full min-w-[500px]">
 
             <thead>
 
@@ -669,14 +663,16 @@ return (
 
         <div
           key={rama}
-          className="bg-white/10 backdrop-blur-md border border-white/10 shadow-2xl p-6 rounded-3xl mt-12"
+          className="bg-white/10 backdrop-blur-md border border-white/10 shadow-2xl p-4 md:p-6 rounded-3xl mt-12"
         >
 
-          <h2 className="text-3xl font-bold mb-6">
+          <h2 className="text-2xl md:text-3xl font-bold mb-6 text-center md:text-left">
             {emojisRamas[rama] || "🏕️"} Ranking {rama}
           </h2>
 
-          <table className="w-full">
+          <div className="overflow-x-auto rounded-2xl">
+
+            <table className="w-full min-w-[500px]">
 
             <thead>
               <tr className="bg-white/10">
@@ -714,6 +710,8 @@ return (
             </tbody>
 
           </table>
+
+          </div>
 
         </div>
 
