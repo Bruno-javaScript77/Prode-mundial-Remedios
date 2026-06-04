@@ -6,12 +6,23 @@ export default function App() {
   const [usuario, setUsuario] = useState("");
   const [rama, setRama] = useState("");
   const [mensaje, setMensaje] = useState("");
+  const [busqueda, setBusqueda] = useState("");
+  const [jornadaSeleccionada, setJornadaSeleccionada] = useState("Jornada 1");
 
   const [partidos, setPartidos] = useState([]);
   const [predicciones, setPredicciones] = useState({});
   const [prediccionesGuardadas, setPrediccionesGuardadas] = useState([]);
 
   const [tablaPosiciones, setTablaPosiciones] = useState([]);
+  const [tablaPorRama, setTablaPorRama] = useState({});
+
+  const emojisRamas = {
+    Manada: "🐺",
+    Unidad: "⚜️",
+    Caminantes: "🏔️",
+    Rovers: "🛶",
+    Dirigentes: "🧭",
+  };
 
   // OBTENER PARTIDOS
   async function obtenerPartidos() {
@@ -154,6 +165,54 @@ function actualizarPrediccion(id, equipo, valor) {
     setTablaPosiciones(resultado);
   }
 
+  //calcular tabla por rama
+  function calcularTablaPorRama() {
+
+  const ramas = {};
+
+  prediccionesGuardadas.forEach((prediccion) => {
+
+    const partido = partidos.find(
+      (p) => p.id === prediccion.partido_id
+    );
+
+    if (!partido) return;
+
+    const puntos = calcularPuntos(
+      prediccion,
+      partido
+    );
+
+    if (!ramas[prediccion.rama]) {
+      ramas[prediccion.rama] = {};
+    }
+
+    if (!ramas[prediccion.rama][prediccion.usuario]) {
+      ramas[prediccion.rama][prediccion.usuario] = 0;
+    }
+
+    ramas[prediccion.rama][prediccion.usuario] += puntos;
+
+  });
+
+  const resultado = {};
+
+  Object.keys(ramas).forEach((rama) => {
+
+    resultado[rama] = Object.entries(ramas[rama])
+      .map(([usuario, puntos]) => ({
+        usuario,
+        puntos,
+      }))
+      .sort((a, b) => b.puntos - a.puntos);
+
+  });
+
+  setTablaPorRama(resultado);
+
+}
+
+
   // INICIO
   useEffect(() => {
     obtenerPartidos();
@@ -164,11 +223,12 @@ function actualizarPrediccion(id, equipo, valor) {
   useEffect(() => {
 
     if (
-      partidos.length > 0 &&
-      prediccionesGuardadas.length > 0
-    ) {
-      calcularTabla();
-    }
+  partidos.length > 0 &&
+  prediccionesGuardadas.length > 0
+) {
+  calcularTabla();
+  calcularTablaPorRama();
+}
 
   }, [partidos, prediccionesGuardadas]);
 
@@ -208,10 +268,31 @@ return (
 </select>
 
 
+      {/* SELECTOR DE JORNADAS */}
+      <div className="flex gap-2 overflow-x-auto pb-4 mb-8 no-scrollbar">
+        {Array.from(new Set(partidos.map((p) => p.jornada || "Sin Jornada")))
+          .sort()
+          .map((j) => (
+            <button
+              key={j}
+              onClick={() => setJornadaSeleccionada(j)}
+              className={`px-6 py-2 rounded-full font-bold transition-all whitespace-nowrap ${
+                jornadaSeleccionada === j
+                  ? "bg-green-500 text-white shadow-lg scale-105"
+                  : "bg-white/10 text-slate-300 hover:bg-white/20"
+              }`}
+            >
+              {j}
+            </button>
+          ))}
+      </div>
+
       {/* PARTIDOS */}
       <div className="space-y-6">
 
-        {partidos.map((partido) => (
+        {partidos
+          .filter((p) => (p.jornada || "Sin Jornada") === jornadaSeleccionada)
+          .map((partido) => (
 
           <div
             key={partido.id}
@@ -281,68 +362,87 @@ return (
           📋 Predicciones Guardadas
         </h2>
 
-        <div className="overflow-hidden rounded-2xl">
+        {/* BUSCADOR */}
+        <input
+          type="text"
+          placeholder="🔍 Buscar participante..."
+          value={busqueda}
+          onChange={(e) => setBusqueda(e.target.value)}
+          className="w-full p-3 rounded-xl bg-white/5 border border-white/10 text-white mb-6 outline-none focus:border-green-400 transition-all"
+        />
 
-          <table className="w-full">
+        {busqueda ? (
+          <div className="overflow-hidden rounded-2xl">
 
-            <thead>
+            <table className="w-full">
 
-              <tr className="bg-white/10">
+              <thead>
 
-                <th className="text-left p-4">
-                  Usuario
-                </th>
+                <tr className="bg-white/10">
 
-                <th className="text-center p-4">
-                  Partido
-                </th>
+                  <th className="text-left p-4">
+                    Usuario
+                  </th>
 
-                <th className="text-center p-4">
-                  Predicción
-                </th>
+                  <th className="text-center p-4">
+                    Partido
+                  </th>
 
-              </tr>
+                  <th className="text-center p-4">
+                    Predicción
+                  </th>
 
-            </thead>
+                </tr>
 
-            <tbody>
+              </thead>
 
-              {prediccionesGuardadas.map((prediccion) => {
+              <tbody>
 
-                const partido = partidos.find(
-                  (p) => p.id === prediccion.partido_id
-                );
+                {prediccionesGuardadas
+                  .filter((p) =>
+                    p.usuario.toLowerCase().includes(busqueda.toLowerCase())
+                  )
+                  .map((prediccion) => {
 
-                return (
+                  const partido = partidos.find(
+                    (p) => p.id === prediccion.partido_id
+                  );
 
-                  <tr
-                    key={prediccion.id}
-                    className="border-b border-white/10 hover:bg-white/5 transition-all"
-                  >
+                  return (
 
-                    <td className="p-4 font-semibold">
-                      {prediccion.usuario}
-                    </td>
+                    <tr
+                      key={prediccion.id}
+                      className="border-b border-white/10 hover:bg-white/5 transition-all"
+                    >
 
-                    <td className="p-4 text-center">
-                      {partido?.local} vs {partido?.visitante}
-                    </td>
+                      <td className="p-4 font-semibold">
+                        {prediccion.usuario}
+                      </td>
 
-                    <td className="p-4 text-center font-black text-green-400">
-                      {prediccion.goles_local}
-                      {" - "}
-                      {prediccion.goles_visitante}
-                    </td>
+                      <td className="p-4 text-center">
+                        {partido?.local} vs {partido?.visitante}
+                      </td>
 
-                  </tr>
-                );
-              })}
+                      <td className="p-4 text-center font-black text-green-400">
+                        {prediccion.goles_local}
+                        {" - "}
+                        {prediccion.goles_visitante}
+                      </td>
 
-            </tbody>
+                    </tr>
+                  );
+                })}
 
-          </table>
+              </tbody>
 
-        </div>
+            </table>
+
+          </div>
+        ) : (
+          <p className="text-center text-slate-400 py-8 italic">
+            Escribe un nombre para ver sus predicciones...
+          </p>
+        )}
 
       </div>
 
@@ -408,6 +508,61 @@ return (
         </div>
 
       </div>
+
+      {/* RANKING POR RAMA */}
+      {Object.keys(tablaPorRama).map((rama) => (
+
+        <div
+          key={rama}
+          className="bg-white/10 backdrop-blur-md border border-white/10 shadow-2xl p-6 rounded-3xl mt-12"
+        >
+
+          <h2 className="text-3xl font-bold mb-6">
+            {emojisRamas[rama] || "🏕️"} Ranking {rama}
+          </h2>
+
+          <table className="w-full">
+
+            <thead>
+              <tr className="bg-white/10">
+                <th className="p-4 text-left">Posición</th>
+                <th className="p-4 text-left">Usuario</th>
+                <th className="p-4 text-right">Puntos</th>
+              </tr>
+            </thead>
+
+            <tbody>
+
+              {tablaPorRama[rama].map((jugador, index) => (
+
+                <tr
+                  key={jugador.usuario}
+                  className="border-b border-white/10"
+                >
+
+                  <td className="p-4">
+                    #{index + 1}
+                  </td>
+
+                  <td className="p-4">
+                    {jugador.usuario}
+                  </td>
+
+                  <td className="p-4 text-right font-bold text-green-400">
+                    {jugador.puntos}
+                  </td>
+
+                </tr>
+
+              ))}
+
+            </tbody>
+
+          </table>
+
+        </div>
+
+      ))}
 
     </div>
 
