@@ -25,6 +25,46 @@ export default function App() {
     Dirigentes: "🧭",
   };
 
+  // FUNCION PARA VERIFICAR SI EL PARTIDO ESTA CERRADO
+  const estaCerrado = (diaStr, horarioStr) => {
+    if (!diaStr || !horarioStr) return false;
+    
+    try {
+      // Formato esperado: "Jue 11/06" y "16:00"
+      const [_, fechaPartes] = diaStr.split(" ");
+      const [dia, mes] = fechaPartes.split("/").map(Number);
+      const [hora, min] = horarioStr.split(":").map(Number);
+      
+      const fechaPartido = new Date(2026, mes - 1, dia, hora, min);
+      return new Date() > fechaPartido;
+    } catch (e) {
+      return false;
+    }
+  };
+
+  // FUNCION PARA OBTENER TIEMPO RESTANTE
+  const obtenerTiempoRestante = (diaStr, horarioStr) => {
+    if (!diaStr || !horarioStr) return null;
+    try {
+      const [_, fechaPartes] = diaStr.split(" ");
+      const [dia, mes] = fechaPartes.split("/").map(Number);
+      const [hora, min] = horarioStr.split(":").map(Number);
+      const fechaPartido = new Date(2026, mes - 1, dia, hora, min);
+      const dif = fechaPartido - new Date();
+      
+      if (dif <= 0) return "Cerrado";
+      
+      const horas = Math.floor(dif / (1000 * 60 * 60));
+      const minutos = Math.floor((dif % (1000 * 60 * 60)) / (1000 * 60));
+      
+      if (horas > 24) return `Cierra en ${Math.floor(horas/24)}d`;
+      if (horas > 0) return `Cierra en ${horas}h ${minutos}m`;
+      return `Cierra en ${minutos}m`;
+    } catch (e) {
+      return null;
+    }
+  };
+
   const codigosBanderas = {
     "México": "mx", "Mexico": "mx",
     "Sudáfrica": "za", "South Africa": "za",
@@ -113,13 +153,15 @@ async function guardarPredicciones() {
     return;
   }
 
-  for (const partido of partidos) {
+    for (const partido of partidos) {
+      // SEGURIDAD: No guardar si el partido ya empezó
+      if (estaCerrado(partido.dia, partido.horario)) continue;
 
-    const prediccion = predicciones[partido.id];
+      const prediccion = predicciones[partido.id];
 
-    if (!prediccion) continue;
+      if (!prediccion) continue;
 
-    await supabase
+      await supabase
       .from("predicciones")
       .upsert(
         [
@@ -402,64 +444,93 @@ return (
               📅 {dia}
             </h3>
             
-            {partidosDia.map((partido) => (
+            {partidosDia.map((partido) => {
+              const cerrado = estaCerrado(partido.dia, partido.horario);
+              const tiempo = obtenerTiempoRestante(partido.dia, partido.horario);
+              
+              return (
               <div
                 key={partido.id}
-                className="relative bg-white/10 backdrop-blur-md border border-white/10 shadow-2xl p-4 md:p-6 rounded-3xl flex flex-col md:flex-row items-center justify-between gap-4 hover:scale-[1.01] transition-all duration-300"
+                className={`relative border shadow-2xl p-4 md:p-6 rounded-3xl flex flex-col md:flex-row items-center justify-between gap-4 transition-all duration-300 ${
+                  cerrado ? "bg-black/20 border-white/5 opacity-75" : "bg-white/10 border-white/10 hover:scale-[1.01]"
+                }`}
               >
-                <div className="absolute -top-3 left-6 bg-green-500 text-white text-[10px] font-black px-2 py-0.5 rounded-full shadow-lg uppercase tracking-tighter z-10">
-                  {partido.horario || "--:--"}
+                {/* HORARIO Y ESTADO */}
+                <div className="absolute -top-3 left-6 flex gap-2 z-10">
+                  <div className="bg-green-500 text-white text-[10px] font-black px-2 py-0.5 rounded-full shadow-lg uppercase tracking-tighter">
+                    {partido.horario || "--:--"}
+                  </div>
+                  {tiempo && (
+                    <div className={`${cerrado ? "bg-red-500" : "bg-blue-500"} text-white text-[10px] font-black px-2 py-0.5 rounded-full shadow-lg uppercase tracking-tighter`}>
+                      {cerrado ? "🔒 CERRADO" : `⏳ ${tiempo}`}
+                    </div>
+                  )}
                 </div>
 
+                {/* EQUIPO LOCAL */}
                 <div className="flex items-center gap-3 w-full md:w-40 justify-between md:justify-start">
                   <div className="flex items-center gap-2">
                     {codigosBanderas[partido.local] ? (
                       <img src={`https://flagcdn.com/w40/${codigosBanderas[partido.local]}.png`} alt={partido.local} className="w-6 h-4 object-cover rounded-sm shadow-sm" />
                     ) : "🏳️"} 
-                    <span className="font-bold text-base md:text-lg">{partido.local}</span>
+                    <span className={`font-bold text-base md:text-lg ${cerrado ? "text-slate-500" : ""}`}>{partido.local}</span>
                   </div>
                   <input
                     type="number"
                     min="0"
                     placeholder="0"
-                    className="w-14 md:w-20 p-2 md:p-3 rounded-xl bg-white text-black text-center font-bold text-lg shadow-inner md:hidden"
+                    disabled={cerrado}
+                    className={`w-14 md:w-20 p-2 md:p-3 rounded-xl text-center font-bold text-lg shadow-inner md:hidden ${
+                      cerrado ? "bg-slate-800 text-slate-500 cursor-not-allowed" : "bg-white text-black"
+                    }`}
                     onChange={(e) => actualizarPrediccion(partido.id, "local", e.target.value)}
                   />
                 </div>
 
+                {/* VS Y INPUTS DESKTOP */}
                 <div className="hidden md:flex items-center gap-4">
                   <input
                     type="number"
                     min="0"
-                    className="w-20 p-3 rounded-2xl bg-white text-black text-center font-bold text-lg shadow-inner"
+                    disabled={cerrado}
+                    className={`w-20 p-3 rounded-2xl text-center font-bold text-lg shadow-inner ${
+                      cerrado ? "bg-slate-800 text-slate-500 cursor-not-allowed" : "bg-white text-black"
+                    }`}
                     onChange={(e) => actualizarPrediccion(partido.id, "local", e.target.value)}
                   />
-                  <span className="font-black text-xl text-slate-300">VS</span>
+                  <span className="font-black text-xl text-slate-300">{cerrado ? "🔒" : "VS"}</span>
                   <input
                     type="number"
                     min="0"
-                    className="w-20 p-3 rounded-2xl bg-white text-black text-center font-bold text-lg shadow-inner"
+                    disabled={cerrado}
+                    className={`w-20 p-3 rounded-2xl text-center font-bold text-lg shadow-inner ${
+                      cerrado ? "bg-slate-800 text-slate-500 cursor-not-allowed" : "bg-white text-black"
+                    }`}
                     onChange={(e) => actualizarPrediccion(partido.id, "visitante", e.target.value)}
                   />
                 </div>
 
+                {/* EQUIPO VISITANTE */}
                 <div className="flex items-center gap-3 w-full md:w-40 justify-between md:justify-end">
                   <input
                     type="number"
                     min="0"
                     placeholder="0"
-                    className="w-14 md:w-20 p-2 md:p-3 rounded-xl bg-white text-black text-center font-bold text-lg shadow-inner md:hidden"
+                    disabled={cerrado}
+                    className={`w-14 md:w-20 p-2 md:p-3 rounded-xl text-center font-bold text-lg shadow-inner md:hidden ${
+                      cerrado ? "bg-slate-800 text-slate-500 cursor-not-allowed" : "bg-white text-black"
+                    }`}
                     onChange={(e) => actualizarPrediccion(partido.id, "visitante", e.target.value)}
                   />
                   <div className="flex items-center gap-2">
-                    <span className="font-bold text-base md:text-lg">{partido.visitante}</span>
+                    <span className={`font-bold text-base md:text-lg ${cerrado ? "text-slate-500" : ""}`}>{partido.visitante}</span>
                     {codigosBanderas[partido.visitante] ? (
                       <img src={`https://flagcdn.com/w40/${codigosBanderas[partido.visitante]}.png`} alt={partido.visitante} className="w-6 h-4 object-cover rounded-sm shadow-sm" />
                     ) : "🏳️"}
                   </div>
                 </div>
               </div>
-            ))}
+            );})}
           </div>
         ))}
       </div>
@@ -583,6 +654,33 @@ return (
           🏆 Tabla de Posiciones
         </h2>
 
+        {/* PODIO DESTACADO */}
+        {tablaPosiciones.length >= 3 && (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+            {/* SEGUNDO PUESTO */}
+            <div className="order-2 md:order-1 bg-gradient-to-b from-slate-400/20 to-transparent p-6 rounded-3xl border border-white/10 text-center flex flex-col items-center justify-center">
+              <span className="text-4xl mb-2">🥈</span>
+              <span className="text-xl font-bold">{tablaPosiciones[1].usuario}</span>
+              <span className="text-slate-400 text-sm">{tablaPosiciones[1].rama}</span>
+              <span className="text-2xl font-black text-slate-300 mt-2">{tablaPosiciones[1].puntos} pts</span>
+            </div>
+            {/* PRIMER PUESTO */}
+            <div className="order-1 md:order-2 bg-gradient-to-b from-yellow-400/20 to-transparent p-8 rounded-3xl border border-yellow-400/30 text-center flex flex-col items-center justify-center scale-105 shadow-[0_0_30px_rgba(250,204,21,0.15)]">
+              <span className="text-5xl mb-2">🥇</span>
+              <span className="text-2xl font-black text-yellow-400">{tablaPosiciones[0].usuario}</span>
+              <span className="text-yellow-400/60 text-sm">{tablaPosiciones[0].rama}</span>
+              <span className="text-3xl font-black text-yellow-400 mt-2">{tablaPosiciones[0].puntos} pts</span>
+            </div>
+            {/* TERCER PUESTO */}
+            <div className="order-3 md:order-3 bg-gradient-to-b from-amber-700/20 to-transparent p-6 rounded-3xl border border-white/10 text-center flex flex-col items-center justify-center">
+              <span className="text-4xl mb-2">🥉</span>
+              <span className="text-xl font-bold">{tablaPosiciones[2].usuario}</span>
+              <span className="text-slate-400 text-sm">{tablaPosiciones[2].rama}</span>
+              <span className="text-2xl font-black text-amber-600 mt-2">{tablaPosiciones[2].puntos} pts</span>
+            </div>
+          </div>
+        )}
+
         <div className="overflow-x-auto rounded-2xl">
 
           <table className="w-full min-w-[500px]">
@@ -620,8 +718,8 @@ return (
                   className="border-b border-white/10 hover:bg-white/5 transition-all"
                 >
 
-                  <td className="p-4 font-black text-yellow-400">
-                    #{index + 1}
+                  <td className="p-4 font-black text-lg">
+                    {index === 0 ? "🥇" : index === 1 ? "🥈" : index === 2 ? "🥉" : `#${index + 1}`}
                   </td>
 
                   <td className="p-4 font-semibold">
@@ -682,8 +780,8 @@ return (
                   className="border-b border-white/10"
                 >
 
-                  <td className="p-4">
-                    #{index + 1}
+                  <td className="p-4 font-black text-lg">
+                    {index === 0 ? "🥇" : index === 1 ? "🥈" : index === 2 ? "🥉" : `#${index + 1}`}
                   </td>
 
                   <td className="p-4">
