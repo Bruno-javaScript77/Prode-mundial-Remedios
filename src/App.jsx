@@ -16,6 +16,7 @@ export default function App() {
   const [tablaPosiciones, setTablaPosiciones] = useState([]);
   const [tablaPorRama, setTablaPorRama] = useState({});
   const [ramaLider, setRamaLider] = useState("---");
+  const [ramaPromedioLider, setRamaPromedioLider] = useState("---");
 
   const emojisRamas = {
     Manada: "🐺",
@@ -315,15 +316,24 @@ function actualizarPrediccion(id, equipo, valor) {
 
   setTablaPorRama(resultado);
 
-  // Calcular rama líder
+  // Calcular rama líder (Total y Promedio)
   const rankingRamas = Object.entries(resultado);
   if (rankingRamas.length > 0) {
-    const lider = rankingRamas.sort((a, b) => {
+    // Líder por Total
+    const liderTotal = [...rankingRamas].sort((a, b) => {
       const sumaA = a[1].reduce((acc, curr) => acc + curr.puntos, 0);
       const sumaB = b[1].reduce((acc, curr) => acc + curr.puntos, 0);
       return sumaB - sumaA;
     })[0][0];
-    setRamaLider(lider);
+    setRamaLider(liderTotal);
+
+    // Líder por Promedio
+    const liderPromedio = [...rankingRamas].sort((a, b) => {
+      const promA = a[1].reduce((acc, curr) => acc + curr.puntos, 0) / a[1].length;
+      const promB = b[1].reduce((acc, curr) => acc + curr.puntos, 0) / b[1].length;
+      return promB - promA;
+    })[0][0];
+    setRamaPromedioLider(liderPromedio);
   }
 
 }
@@ -360,27 +370,45 @@ return (
         ⚽ Prode Mundial 2026
       </h1>
 
-      {/* ESTADÍSTICAS RÁPIDAS */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-12">
-        <div className="bg-white/10 backdrop-blur-md border border-white/10 p-6 rounded-3xl shadow-xl hover:scale-105 transition-all">
-          <p className="text-slate-400 text-sm font-bold uppercase tracking-wider">👥 Participantes</p>
-          <p className="text-4xl font-black text-white mt-1">{tablaPosiciones.length}</p>
+      {/* REGLAS Y STATS */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-12">
+        {/* REGLAS */}
+        <div className="lg:col-span-1 bg-white/5 border border-white/10 p-6 rounded-3xl shadow-xl">
+          <h3 className="text-lg font-bold text-green-400 mb-4 flex items-center gap-2">📜 Sistema de Puntos</h3>
+          <ul className="space-y-3 text-sm">
+            <li className="flex justify-between items-center bg-white/5 p-2 rounded-xl border border-white/5">
+              <span>Resultado Exacto</span>
+              <span className="font-bold text-green-400">+3 pts</span>
+            </li>
+            <li className="flex justify-between items-center bg-white/5 p-2 rounded-xl border border-white/5">
+              <span>Ganador / Empate</span>
+              <span className="font-bold text-blue-400">+1 pts</span>
+            </li>
+            <li className="flex justify-between items-center bg-white/5 p-2 rounded-xl border border-white/5 text-slate-500">
+              <span>Sin aciertos</span>
+              <span className="font-bold">0 pts</span>
+            </li>
+          </ul>
         </div>
-        <div className="bg-white/10 backdrop-blur-md border border-white/10 p-6 rounded-3xl shadow-xl hover:scale-105 transition-all">
-          <p className="text-slate-400 text-sm font-bold uppercase tracking-wider">⚽ Partidos</p>
-          <p className="text-4xl font-black text-white mt-1">{partidos.length}</p>
-        </div>
-        <div className="bg-white/10 backdrop-blur-md border border-white/10 p-6 rounded-3xl shadow-xl hover:scale-105 transition-all">
-          <p className="text-slate-400 text-sm font-bold uppercase tracking-wider">🏆 Líder Actual</p>
-          <p className="text-2xl font-black text-yellow-400 mt-2 truncate">
-            {tablaPosiciones[0]?.usuario || "---"}
-          </p>
-        </div>
-        <div className="bg-white/10 backdrop-blur-md border border-white/10 p-6 rounded-3xl shadow-xl hover:scale-105 transition-all">
-          <p className="text-slate-400 text-sm font-bold uppercase tracking-wider">🔥 Rama Líder</p>
-          <p className="text-2xl font-black text-green-400 mt-2 truncate">
-            {ramaLider}
-          </p>
+
+        {/* STATS CARDS */}
+        <div className="lg:col-span-2 grid grid-cols-2 sm:grid-cols-4 gap-4">
+          <div className="bg-white/10 backdrop-blur-md border border-white/10 p-4 rounded-3xl text-center shadow-xl">
+            <p className="text-slate-400 text-[10px] font-bold uppercase mb-1">👥 Participantes</p>
+            <p className="text-3xl font-black text-white">{tablaPosiciones.length}</p>
+          </div>
+          <div className="bg-white/10 backdrop-blur-md border border-white/10 p-4 rounded-3xl text-center shadow-xl">
+            <p className="text-slate-400 text-[10px] font-bold uppercase mb-1">⚽ Partidos</p>
+            <p className="text-3xl font-black text-white">{partidos.length}</p>
+          </div>
+          <div className="bg-white/10 backdrop-blur-md border border-white/10 p-4 rounded-3xl text-center shadow-xl">
+            <p className="text-slate-400 text-[10px] font-bold uppercase mb-1">🏆 Líder</p>
+            <p className="text-xl font-black text-yellow-400 truncate">{tablaPosiciones[0]?.usuario || "---"}</p>
+          </div>
+          <div className="bg-white/10 backdrop-blur-md border border-white/10 p-4 rounded-3xl text-center shadow-xl">
+            <p className="text-slate-400 text-[10px] font-bold uppercase mb-1">🔥 Rama Lider (Prom)</p>
+            <p className="text-xl font-black text-green-400 truncate">{emojisRamas[ramaPromedioLider]} {ramaPromedioLider}</p>
+          </div>
         </div>
       </div>
 
@@ -577,6 +605,10 @@ return (
                     Usuario
                   </th>
 
+                  <th className="text-left p-4">
+                    Rama
+                  </th>
+
                   <th className="text-center p-4">
                     Partido
                   </th>
@@ -610,6 +642,10 @@ return (
 
                       <td className="p-4 font-semibold">
                         {prediccion.usuario}
+                      </td>
+
+                      <td className="p-4 text-sm text-slate-300">
+                        {emojisRamas[prediccion.rama]} {prediccion.rama}
                       </td>
 
                     <td className="p-4 text-center">
@@ -755,9 +791,17 @@ return (
           className="bg-white/10 backdrop-blur-md border border-white/10 shadow-2xl p-4 md:p-6 rounded-3xl mt-12"
         >
 
-          <h2 className="text-2xl md:text-3xl font-bold mb-6 text-center md:text-left">
-            {emojisRamas[rama] || "🏕️"} Ranking {rama}
-          </h2>
+          <div className="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
+            <h2 className="text-2xl md:text-3xl font-bold text-center md:text-left">
+              {emojisRamas[rama] || "🏕️"} Ranking {rama}
+            </h2>
+            <div className="bg-white/5 px-4 py-2 rounded-2xl border border-white/10">
+              <span className="text-slate-400 text-sm">Promedio: </span>
+              <span className="font-bold text-green-400">
+                {(tablaPorRama[rama].reduce((sum, j) => sum + j.puntos, 0) / tablaPorRama[rama].length).toFixed(1)} pts
+              </span>
+            </div>
+          </div>
 
           <div className="overflow-x-auto rounded-2xl">
 
