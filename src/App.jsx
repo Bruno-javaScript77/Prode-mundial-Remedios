@@ -15,6 +15,7 @@ export default function App() {
 
   const [tablaPosiciones, setTablaPosiciones] = useState([]);
   const [tablaPorRama, setTablaPorRama] = useState({});
+  const [ramaLider, setRamaLider] = useState("---");
 
   const emojisRamas = {
     Manada: "🐺",
@@ -24,27 +25,64 @@ export default function App() {
     Dirigentes: "🧭",
   };
 
-  const banderas = {
-    México: "🇲🇽",
-    Sudáfrica: "🇿🇦",
-    "Corea del Sur": "🇰🇷",
-    "República Checa": "🇨🇿",
-    Canadá: "🇨🇦",
-    "Bosnia y Herzegovina": "🇧🇦",
-    "Estados Unidos": "🇺🇸",
-    Paraguay: "🇵🇾",
-    Haití: "🇭🇹",
-    Escocia: "🏴󠁧󠁢󠁳󠁣󠁴󠁿",
-    España: "🇪🇸",
-    "Cabo Verde": "🇨🇻",
-    Argentina: "🇦🇷",
-    Argelia: "🇩🇿",
-    Brasil: "🇧🇷",
-    Marruecos: "🇲🇦",
-    Qatar: "🇶🇦",
-    Suiza: "🇨🇭",
-    Australia: "🇦🇺",
-    Turquía: "🇹🇷",
+  const codigosBanderas = {
+    "México": "mx",
+    "Mexico": "mx",
+    "Sudáfrica": "za",
+    "South Africa": "za",
+    "Corea del Sur": "kr",
+    "Korea Republic": "kr",
+    "República Checa": "cz",
+    "Czechia": "cz",
+    "Canadá": "ca",
+    "Canada": "ca",
+    "Bosnia y Herzegovina": "ba",
+    "Bosnia and Herzegovina": "ba",
+    "Estados Unidos": "us",
+    "USA": "us",
+    "Paraguay": "py",
+    "Haití": "ht",
+    "Haiti": "ht",
+    "Escocia": "gb-sct",
+    "Scotland": "gb-sct",
+    "España": "es",
+    "Spain": "es",
+    "Cabo Verde": "cv",
+    "Argentina": "ar",
+    "Argelia": "dz",
+    "Algeria": "dz",
+    "Brasil": "br",
+    "Brazil": "br",
+    "Marruecos": "ma",
+    "Morocco": "ma",
+    "Qatar": "qa",
+    "Suiza": "ch",
+    "Switzerland": "ch",
+    "Australia": "au",
+    "Turquía": "tr",
+    "Türkiye": "tr",
+    "Ghana": "gh",
+    "Panamá": "pa",
+    "Panama": "pa",
+    "Inglaterra": "gb-eng",
+    "England": "gb-eng",
+    "Croacia": "hr",
+    "Croatia": "hr",
+    "Portugal": "pt",
+    "Congo DR": "cd",
+    "Uzbekistán": "uz",
+    "Uzbekistan": "uz",
+    "Colombia": "co",
+    "Francia": "fr",
+    "France": "fr",
+    "Senegal": "sn",
+    "Irak": "iq",
+    "Iraq": "iq",
+    "Noruega": "no",
+    "Norway": "no",
+    "Austria": "at",
+    "Jordania": "jo",
+    "Jordan": "jo",
   };
 
   // OBTENER PARTIDOS
@@ -92,15 +130,18 @@ async function guardarPredicciones() {
 
     await supabase
       .from("predicciones")
-      .insert([
-        {
-          usuario: usuario,
-          rama: rama,
-          partido_id: partido.id,
-          goles_local: Number(prediccion.local),
-          goles_visitante: Number(prediccion.visitante),
-        },
-      ]);
+      .upsert(
+        [
+          {
+            usuario: usuario,
+            rama: rama,
+            partido_id: partido.id,
+            goles_local: Number(prediccion.local),
+            goles_visitante: Number(prediccion.visitante),
+          },
+        ],
+        { onConflict: 'usuario,partido_id' }
+      );
   }
 
   setMensaje("✅ Predicciones guardadas");
@@ -124,6 +165,13 @@ function actualizarPrediccion(id, equipo, valor) {
 
   // CALCULAR PUNTOS
   function calcularPuntos(prediccion, partido) {
+
+    if (
+      partido.goles_local === null ||
+      partido.goles_visitante === null
+    ) {
+      return 0;
+    }
 
     if (
       prediccion.goles_local === partido.goles_local &&
@@ -234,6 +282,17 @@ function actualizarPrediccion(id, equipo, valor) {
 
   setTablaPorRama(resultado);
 
+  // Calcular rama líder
+  const rankingRamas = Object.entries(resultado);
+  if (rankingRamas.length > 0) {
+    const lider = rankingRamas.sort((a, b) => {
+      const sumaA = a[1].reduce((acc, curr) => acc + curr.puntos, 0);
+      const sumaB = b[1].reduce((acc, curr) => acc + curr.puntos, 0);
+      return sumaB - sumaA;
+    })[0][0];
+    setRamaLider(lider);
+  }
+
 }
 
 
@@ -287,13 +346,7 @@ return (
         <div className="bg-white/10 backdrop-blur-md border border-white/10 p-6 rounded-3xl shadow-xl hover:scale-105 transition-all">
           <p className="text-slate-400 text-sm font-bold uppercase tracking-wider">🔥 Rama Líder</p>
           <p className="text-2xl font-black text-green-400 mt-2 truncate">
-            {Object.entries(tablaPorRama).length > 0 
-              ? Object.entries(tablaPorRama).sort((a, b) => {
-                  const sumaA = a[1].reduce((acc, curr) => acc + curr.puntos, 0);
-                  const sumaB = b[1].reduce((acc, curr) => acc + curr.puntos, 0);
-                  return sumaB - sumaA;
-                })[0][0]
-              : "---"}
+            {ramaLider}
           </p>
         </div>
       </div>
@@ -354,7 +407,14 @@ return (
           >
 
             <span className="font-bold text-lg w-36 flex items-center gap-2">
-              {banderas[partido.local] || "🏳️"} {partido.local}
+              {codigosBanderas[partido.local] ? (
+                <img 
+                  src={`https://flagcdn.com/w40/${codigosBanderas[partido.local]}.png`} 
+                  alt={partido.local}
+                  className="w-6 h-4 object-cover rounded-sm shadow-sm"
+                />
+              ) : "🏳️"} 
+              {partido.local}
             </span>
 
             <input
@@ -388,7 +448,14 @@ return (
             />
 
             <span className="font-bold text-lg w-36 text-right flex items-center justify-end gap-2">
-              {partido.visitante} {banderas[partido.visitante] || "🏳️"}
+              {partido.visitante}
+              {codigosBanderas[partido.visitante] ? (
+                <img 
+                  src={`https://flagcdn.com/w40/${codigosBanderas[partido.visitante]}.png`} 
+                  alt={partido.visitante}
+                  className="w-6 h-4 object-cover rounded-sm shadow-sm"
+                />
+              ) : "🏳️"}
             </span>
 
           </div>
@@ -474,7 +541,15 @@ return (
                       </td>
 
                     <td className="p-4 text-center">
-                      {banderas[partido?.local] || "🏳️"} {partido?.local} vs {partido?.visitante} {banderas[partido?.visitante] || "🏳️"}
+                      <div className="flex items-center justify-center gap-2">
+                        {codigosBanderas[partido?.local] && (
+                          <img src={`https://flagcdn.com/w40/${codigosBanderas[partido?.local]}.png`} className="w-5 h-3" />
+                        )}
+                        {partido?.local} vs {partido?.visitante}
+                        {codigosBanderas[partido?.visitante] && (
+                          <img src={`https://flagcdn.com/w40/${codigosBanderas[partido?.visitante]}.png`} className="w-5 h-3" />
+                        )}
+                      </div>
                     </td>
 
                       <td className="p-4 text-center font-black text-green-400">
