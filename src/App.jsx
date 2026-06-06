@@ -425,7 +425,7 @@ return (
     <div 
       className="fixed inset-0 z-0 pointer-events-none flex items-center justify-center opacity-[0.03] blur-[2px]"
       style={{
-        backgroundImage: 'url("/logo.jpg")',
+        backgroundImage: 'url("/logo.jpeg")',
         backgroundRepeat: 'no-repeat',
         backgroundPosition: 'center',
         backgroundSize: 'contain',
