@@ -368,6 +368,35 @@ function actualizarPrediccion(id, equipo, valor) {
 }
 
 
+  // FUNCION PARA LOGUEARSE COMO ADMIN
+  const loginAdmin = () => {
+    const pass = prompt("Introduce la contraseña de administrador:");
+    if (pass === "bruno.terry") {
+      setIsAdmin(true);
+      setMensaje("🔓 Modo administrador activado");
+    } else {
+      alert("Contraseña incorrecta");
+    }
+  };
+
+  // FUNCION PARA GUARDAR RESULTADOS REALES (ADMIN)
+  async function guardarResultadosReales() {
+    for (const partidoId in resultadosReales) {
+      const res = resultadosReales[partidoId];
+      if (res.local === "" || res.visitante === "") continue;
+
+      await supabase
+        .from("partidos")
+        .update({
+          goles_local: Number(res.local),
+          goles_visitante: Number(res.visitante)
+        })
+        .eq("id", partidoId);
+    }
+    setMensaje("✅ Resultados reales guardados");
+    obtenerPartidos();
+  }
+
   // INICIO
   useEffect(() => {
     obtenerPartidos();
