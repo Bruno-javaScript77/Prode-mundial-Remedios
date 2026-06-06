@@ -4,6 +4,7 @@ import { supabase } from "./supabase";
 export default function App() {
 
   const [usuario, setUsuario] = useState("");
+  const [pin, setPin] = useState("");
   const [rama, setRama] = useState("");
   const [mensaje, setMensaje] = useState("");
   const [busqueda, setBusqueda] = useState("");
@@ -24,7 +25,7 @@ export default function App() {
     Unidad: "⚜️",
     Caminantes: "🏔️",
     Rovers: "🛶",
-    Dirigentes: "🧭",
+    Educadores: "🧭",
   };
 
   // FUNCION PARA VERIFICAR SI EL PARTIDO ESTA CERRADO
@@ -150,8 +151,26 @@ export default function App() {
   // GUARDAR PREDICCIONES
 async function guardarPredicciones() {
 
-  if (!usuario || !rama) {
-    setMensaje("⚠️ Completá nombre y rama");
+  if (!usuario || !rama || !pin) {
+    setMensaje("⚠️ Completá nombre, rama y PIN");
+    return;
+  }
+
+  if (pin.length !== 4) {
+    setMensaje("⚠️ El PIN debe ser de 4 dígitos");
+    return;
+  }
+
+  // Verificar si el usuario ya existe y si el PIN coincide
+  const { data: usuarioExistente } = await supabase
+    .from("predicciones")
+    .select("pin")
+    .eq("usuario", usuario)
+    .limit(1)
+    .single();
+
+  if (usuarioExistente && usuarioExistente.pin !== pin) {
+    setMensaje("❌ PIN incorrecto para este usuario");
     return;
   }
 
@@ -163,6 +182,12 @@ async function guardarPredicciones() {
 
       if (!prediccion) continue;
 
+      // VALIDACIÓN: Evitar guardar si falta algún gol
+      if (prediccion.local === "" || prediccion.visitante === "" || 
+          prediccion.local === undefined || prediccion.visitante === undefined) {
+        continue; // Omitir este partido si está incompleto
+      }
+
       await supabase
       .from("predicciones")
       .upsert(
@@ -170,6 +195,7 @@ async function guardarPredicciones() {
           {
             usuario: usuario,
             rama: rama,
+            pin: pin,
             partido_id: partido.id,
             goles_local: Number(prediccion.local),
             goles_visitante: Number(prediccion.visitante),
@@ -363,9 +389,19 @@ function actualizarPrediccion(id, equipo, valor) {
   
 return (
 
-  <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-950 text-white p-6">
+  <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-950 text-white p-6 relative overflow-x-hidden">
+    {/* LOGO DE FONDO DIFUMINADO */}
+    <div 
+      className="fixed inset-0 z-0 pointer-events-none flex items-center justify-center opacity-[0.03] blur-[2px]"
+      style={{
+        backgroundImage: 'url("/logo.png")',
+        backgroundRepeat: 'no-repeat',
+        backgroundPosition: 'center',
+        backgroundSize: 'contain',
+      }}
+    />
 
-    <div className="max-w-5xl mx-auto">
+    <div className="max-w-5xl mx-auto relative z-10">
 
 
 
@@ -399,6 +435,11 @@ return (
             </ul>
           </div>
         )}
+
+        {/* MENSAJE DE BIENVENIDA */}
+        <p className="mt-8 text-center text-slate-400 max-w-2xl mx-auto text-sm md:text-base leading-relaxed">
+          ¡Bienvenido al prode del Mundial 2026 de Remedios! Para comenzar, completá tu nombre, la rama en la que estás y cargá tus primeros resultados.
+        </p>
       </div>
 
       {/* STATS CARDS */}
@@ -421,14 +462,24 @@ return (
         </div>
       </div>
 
-      {/* NOMBRE */}
-<input
-  type="text"
-  placeholder="Tu nombre"
-  value={usuario}
-  onChange={(e) => setUsuario(e.target.value)}
-  className="w-full p-4 rounded-2xl bg-white text-black mb-8 text-lg font-semibold shadow-xl outline-none"
-/>
+      {/* NOMBRE Y PIN */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+        <input
+          type="text"
+          placeholder="Tu nombre"
+          value={usuario}
+          onChange={(e) => setUsuario(e.target.value)}
+          className="w-full p-4 rounded-2xl bg-white text-black text-lg font-semibold shadow-xl outline-none"
+        />
+        <input
+          type="password"
+          maxLength="4"
+          placeholder="PIN (4 dígitos)"
+          value={pin}
+          onChange={(e) => setPin(e.target.value.replace(/\D/g, ""))}
+          className="w-full p-4 rounded-2xl bg-white text-black text-lg font-semibold shadow-xl outline-none"
+        />
+      </div>
 
 {/* RAMA */}
 <select
@@ -441,7 +492,7 @@ return (
   <option value="Unidad">Unidad</option>
   <option value="Caminantes">Caminantes</option>
   <option value="Rovers">Rovers</option>
-  <option value="Dirigentes">Dirigentes</option>
+  <option value="Educadores">Educadores</option>
 </select>
 
 
@@ -512,19 +563,26 @@ return (
                     ) : "🏳️"} 
                     <span className={`font-bold text-base md:text-lg ${cerrado ? "text-slate-500" : ""}`}>{partido.local}</span>
                   </div>
-                  <input
-                    type="number"
-                    min="0"
-                    placeholder="0"
-                    disabled={cerrado}
-                    className={`w-14 md:w-20 p-2 md:p-3 rounded-xl text-center font-bold text-lg shadow-inner md:hidden ${
-                      cerrado ? "bg-slate-800 text-slate-500 cursor-not-allowed" : "bg-white text-black"
-                    }`}
-                    onChange={(e) => actualizarPrediccion(partido.id, "local", e.target.value)}
-                  />
-                </div>
-
-                {/* VS Y INPUTS DESKTOP */}
+	                  <input
+	                    type="number"
+	                    min="0"
+	                    placeholder="0"
+	                    disabled={cerrado}
+	                    className={`w-14 md:w-20 p-2 md:p-3 rounded-xl text-center font-bold text-lg shadow-inner md:hidden ${
+	                      cerrado ? "bg-slate-800 text-slate-500 cursor-not-allowed" : "bg-white text-black"
+	                    }`}
+	                    onChange={(e) => actualizarPrediccion(partido.id, "local", e.target.value)}
+	                  />
+	                </div>
+	
+	                {/* RESULTADO REAL MOBILE */}
+	                {partido.goles_local !== null && partido.goles_visitante !== null && (
+	                  <div className="md:hidden bg-yellow-400/20 text-yellow-400 text-xs font-black px-3 py-1 rounded-full border border-yellow-400/30">
+	                    Resultado: {partido.goles_local} - {partido.goles_visitante}
+	                  </div>
+	                )}
+	
+	                {/* VS Y INPUTS DESKTOP */}
                 <div className="hidden md:flex items-center gap-4">
                   <input
                     type="number"
@@ -535,7 +593,14 @@ return (
                     }`}
                     onChange={(e) => actualizarPrediccion(partido.id, "local", e.target.value)}
                   />
-                  <span className="font-black text-xl text-slate-300">{cerrado ? "🔒" : "VS"}</span>
+	                  <div className="flex flex-col items-center">
+	                    <span className="font-black text-xl text-slate-300">{cerrado ? "🔒" : "VS"}</span>
+	                    {partido.goles_local !== null && partido.goles_visitante !== null && (
+	                      <div className="mt-1 bg-yellow-400/20 text-yellow-400 text-[10px] font-black px-2 py-0.5 rounded-md border border-yellow-400/30">
+	                        {partido.goles_local} - {partido.goles_visitante}
+	                      </div>
+	                    )}
+	                  </div>
                   <input
                     type="number"
                     min="0"
@@ -792,7 +857,65 @@ return (
 
       </div>
 
-      {/* RANKING POR RAMA */}
+      {/* PANEL DE ADMINISTRADOR */}
+      {isAdmin && (
+        <div className="bg-slate-800/50 border-2 border-yellow-500/50 p-8 rounded-3xl mt-12 mb-12 shadow-2xl animate-in zoom-in duration-300">
+          <div className="flex justify-between items-center mb-8">
+            <h2 className="text-3xl font-black text-yellow-400 flex items-center gap-3">
+              🛡️ Panel de Control (Admin)
+            </h2>
+            <button 
+              onClick={() => setIsAdmin(false)}
+              className="text-slate-400 hover:text-white font-bold"
+            >
+              Cerrar X
+            </button>
+          </div>
+
+          <div className="space-y-6">
+            {partidos
+              .sort((a, b) => a.id - b.id)
+              .map((partido) => (
+              <div key={partido.id} className="bg-white/5 p-4 rounded-2xl border border-white/10 flex flex-col md:flex-row justify-between items-center gap-4">
+                <div className="flex items-center gap-3 flex-1">
+                  <img src={`https://flagcdn.com/w40/${codigosBanderas[partido.local] || 'un'}.png`} className="w-6 h-4 object-cover rounded-sm" alt="" />
+                  <span className="font-bold">{partido.local}</span>
+                  <span className="text-slate-500 text-sm">vs</span>
+                  <span className="font-bold">{partido.visitante}</span>
+                  <img src={`https://flagcdn.com/w40/${codigosBanderas[partido.visitante] || 'un'}.png`} className="w-6 h-4 object-cover rounded-sm" alt="" />
+                </div>
+                
+                <div className="flex items-center gap-2">
+                  <input
+                    type="number"
+                    value={resultadosReales[partido.id]?.local}
+                    onChange={(e) => setResultadosReales({...resultadosReales, [partido.id]: {...resultadosReales[partido.id], local: e.target.value}})}
+                    className="w-14 p-2 rounded-xl bg-slate-900 text-center font-bold text-yellow-400 outline-none border border-white/10"
+                    placeholder="L"
+                  />
+                  <span className="font-bold text-slate-500">-</span>
+                  <input
+                    type="number"
+                    value={resultadosReales[partido.id]?.visitante}
+                    onChange={(e) => setResultadosReales({...resultadosReales, [partido.id]: {...resultadosReales[partido.id], visitante: e.target.value}})}
+                    className="w-14 p-2 rounded-xl bg-slate-900 text-center font-bold text-yellow-400 outline-none border border-white/10"
+                    placeholder="V"
+                  />
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <button
+            onClick={guardarResultadosReales}
+            className="w-full bg-yellow-500 hover:bg-yellow-400 text-slate-900 font-black p-5 rounded-3xl mt-8 shadow-xl transition-all"
+          >
+            GUARDAR RESULTADOS REALES Y ACTUALIZAR RANKING
+          </button>
+        </div>
+      )}
+
+      {/* TABLA POR RAMA */}
       {Object.keys(tablaPorRama).map((rama) => (
 
         <div
@@ -858,6 +981,18 @@ return (
         </div>
 
       ))}
+
+      <div className="mt-20 text-center text-slate-600 text-sm flex flex-col items-center gap-4">
+        <p>Prode Mundial 2026 - Desarrollado para Remedios</p>
+        {!isAdmin && (
+          <button 
+            onClick={loginAdmin}
+            className="opacity-20 hover:opacity-100 transition-opacity text-[10px] uppercase tracking-widest font-bold"
+          >
+            ⚙️ Acceso Admin
+          </button>
+        )}
+      </div>
 
     </div>
 
