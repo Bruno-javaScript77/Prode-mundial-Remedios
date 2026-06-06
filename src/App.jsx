@@ -19,6 +19,8 @@ export default function App() {
   const [ramaLider, setRamaLider] = useState("---");
   const [ramaPromedioLider, setRamaPromedioLider] = useState("---");
   const [mostrarReglas, setMostrarReglas] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [resultadosReales, setResultadosReales] = useState({});
 
   const emojisRamas = {
     Manada: "🐺",
