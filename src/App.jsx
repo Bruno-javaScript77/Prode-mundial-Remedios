@@ -23,6 +23,7 @@ export default function App() {
   const [resultadosReales, setResultadosReales] = useState({});
 
   const emojisRamas = {
+    Castores: "🦫",
     Manada: "🐺",
     Unidad: "⚜️",
     Caminantes: "🏔️",
@@ -300,6 +301,46 @@ function actualizarPrediccion(id, equipo, valor) {
     setTablaPosiciones(resultado);
   }
 
+  // CALCULAR ESTADÍSTICAS DE UN USUARIO
+  function calcularEstadisticasUsuario(nombreUsuario) {
+    const prediccionesUsuario = prediccionesGuardadas.filter(
+      (p) => p.usuario.toLowerCase() === nombreUsuario.toLowerCase()
+    );
+
+    let aciertosExactos = 0;
+    let aciertosResultado = 0;
+    let totalPartidos = 0;
+
+    prediccionesUsuario.forEach((prediccion) => {
+      const partido = partidos.find((p) => p.id === prediccion.partido_id);
+      if (!partido) return;
+
+      // Solo contar si el partido tiene resultado
+      if (partido.goles_local !== null && partido.goles_visitante !== null) {
+        totalPartidos++;
+        const puntos = calcularPuntos(prediccion, partido);
+        if (puntos === 3) aciertosExactos++;
+        else if (puntos === 1) aciertosResultado++;
+      }
+    });
+
+    const porcentaje =
+      totalPartidos > 0
+        ? Math.round(
+            ((aciertosExactos * 3 + aciertosResultado * 1) /
+              (totalPartidos * 3)) *
+              100
+          )
+        : 0;
+
+    return {
+      aciertosExactos,
+      aciertosResultado,
+      totalPartidos,
+      porcentaje,
+    };
+  }
+
   //calcular tabla por rama
   function calcularTablaPorRama() {
 
@@ -519,6 +560,7 @@ return (
   className="w-full p-4 rounded-2xl bg-white text-black mb-8 text-lg font-semibold shadow-xl"
 >
   <option value="">Seleccionar rama</option>
+  <option value="Castores">Castores</option>
   <option value="Manada">Manada</option>
   <option value="Unidad">Unidad</option>
   <option value="Caminantes">Caminantes</option>
@@ -698,87 +740,106 @@ return (
         />
 
         {busqueda ? (
-          <div className="overflow-x-auto rounded-2xl">
+          <div className="space-y-6">
+            {/* TARJETA DE ESTADÍSTICAS */}
+            {(() => {
+              const stats = calcularEstadisticasUsuario(busqueda);
+              return (
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  <div className="bg-gradient-to-br from-blue-500/20 to-transparent p-4 rounded-2xl border border-blue-400/30 text-center">
+                    <p className="text-slate-400 text-xs font-bold uppercase mb-1">📋 Partidos</p>
+                    <p className="text-3xl font-black text-blue-400">{stats.totalPartidos}</p>
+                  </div>
+                  <div className="bg-gradient-to-br from-green-500/20 to-transparent p-4 rounded-2xl border border-green-400/30 text-center">
+                    <p className="text-slate-400 text-xs font-bold uppercase mb-1">🎯 Exactos</p>
+                    <p className="text-3xl font-black text-green-400">{stats.aciertosExactos}</p>
+                  </div>
+                  <div className="bg-gradient-to-br from-yellow-500/20 to-transparent p-4 rounded-2xl border border-yellow-400/30 text-center">
+                    <p className="text-slate-400 text-xs font-bold uppercase mb-1">🏆 Resultado</p>
+                    <p className="text-3xl font-black text-yellow-400">{stats.aciertosResultado}</p>
+                  </div>
+                  <div className="bg-gradient-to-br from-purple-500/20 to-transparent p-4 rounded-2xl border border-purple-400/30 text-center">
+                    <p className="text-slate-400 text-xs font-bold uppercase mb-1">📊 Precisión</p>
+                    <p className="text-3xl font-black text-purple-400">{stats.porcentaje}%</p>
+                  </div>
+                </div>
+              );
+            })()}
 
-            <table className="w-full min-w-[500px]">
+            {/* TABLA DE PREDICCIONES */}
+            <div className="overflow-x-auto rounded-2xl">
+              <table className="w-full min-w-[500px]">
+                <thead>
+                  <tr className="bg-white/10">
+                    <th className="text-left p-4">Usuario</th>
+                    <th className="text-left p-4">Rama</th>
+                    <th className="text-center p-4">Partido</th>
+                    <th className="text-center p-4">Tu Predicción</th>
+                    <th className="text-center p-4">Resultado Real</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {prediccionesGuardadas
+                    .filter((p) =>
+                      p.usuario.toLowerCase().includes(busqueda.toLowerCase())
+                    )
+                    .map((prediccion) => {
+                      const partido = partidos.find(
+                        (p) => p.id === prediccion.partido_id
+                      );
+                      const puntos = calcularPuntos(prediccion, partido);
+                      const resultadoColor =
+                        puntos === 3
+                          ? "text-green-400"
+                          : puntos === 1
+                          ? "text-yellow-400"
+                          : "text-red-400";
+                      const resultadoEmoji =
+                        puntos === 3 ? "✅" : puntos === 1 ? "⚠️" : "❌";
 
-              <thead>
-
-                <tr className="bg-white/10">
-
-                  <th className="text-left p-4">
-                    Usuario
-                  </th>
-
-                  <th className="text-left p-4">
-                    Rama
-                  </th>
-
-                  <th className="text-center p-4">
-                    Partido
-                  </th>
-
-                  <th className="text-center p-4">
-                    Predicción
-                  </th>
-
-                </tr>
-
-              </thead>
-
-              <tbody>
-
-                {prediccionesGuardadas
-                  .filter((p) =>
-                    p.usuario.toLowerCase().includes(busqueda.toLowerCase())
-                  )
-                  .map((prediccion) => {
-
-                  const partido = partidos.find(
-                    (p) => p.id === prediccion.partido_id
-                  );
-
-                  return (
-
-                    <tr
-                      key={prediccion.id}
-                      className="border-b border-white/10 hover:bg-white/5 transition-all"
-                    >
-
-                      <td className="p-4 font-semibold">
-                        {prediccion.usuario}
-                      </td>
-
-                      <td className="p-4 text-sm text-slate-300">
-                        {emojisRamas[prediccion.rama]} {prediccion.rama}
-                      </td>
-
-                    <td className="p-4 text-center">
-                      <div className="flex items-center justify-center gap-2">
-                        {codigosBanderas[partido?.local] && (
-                          <img src={`https://flagcdn.com/w40/${codigosBanderas[partido?.local]}.png`} className="w-5 h-3" />
-                        )}
-                        {partido?.local} vs {partido?.visitante}
-                        {codigosBanderas[partido?.visitante] && (
-                          <img src={`https://flagcdn.com/w40/${codigosBanderas[partido?.visitante]}.png`} className="w-5 h-3" />
-                        )}
-                      </div>
-                    </td>
-
-                      <td className="p-4 text-center font-black text-green-400">
-                        {prediccion.goles_local}
-                        {" - "}
-                        {prediccion.goles_visitante}
-                      </td>
-
-                    </tr>
-                  );
-                })}
-
-              </tbody>
-
-            </table>
-
+                      return (
+                        <tr
+                          key={prediccion.id}
+                          className="border-b border-white/10 hover:bg-white/5 transition-all"
+                        >
+                          <td className="p-4 font-semibold">
+                            {prediccion.usuario}
+                          </td>
+                          <td className="p-4 text-sm text-slate-300">
+                            {emojisRamas[prediccion.rama]} {prediccion.rama}
+                          </td>
+                          <td className="p-4 text-center">
+                            <div className="flex items-center justify-center gap-2">
+                              {codigosBanderas[partido?.local] && (
+                                <img
+                                  src={`https://flagcdn.com/w40/${codigosBanderas[partido?.local]}.png`}
+                                  className="w-5 h-3"
+                                />
+                              )}
+                              {partido?.local} vs {partido?.visitante}
+                              {codigosBanderas[partido?.visitante] && (
+                                <img
+                                  src={`https://flagcdn.com/w40/${codigosBanderas[partido?.visitante]}.png`}
+                                  className="w-5 h-3"
+                                />
+                              )}
+                            </div>
+                          </td>
+                          <td className="p-4 text-center font-black text-blue-400">
+                            {prediccion.goles_local} - {prediccion.goles_visitante}
+                          </td>
+                          <td className={`p-4 text-center font-black ${resultadoColor}`}>
+                            {partido?.goles_local !== null &&
+                            partido?.goles_visitante !== null
+                              ? `${resultadoEmoji} ${partido.goles_local} - ${partido.goles_visitante}`
+                              : "⏳ Pendiente"}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                </tbody>
+              </table>
+            </div>
           </div>
         ) : (
           <p className="text-center text-slate-400 py-8 italic">
