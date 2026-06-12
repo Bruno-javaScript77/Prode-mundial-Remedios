@@ -324,7 +324,7 @@ function actualizarPrediccion(id, equipo, valor) {
     }
 
     setDatosConfirmados(true);
-    setMensaje("✅ ¡Datos confirmados! Ya podés cargar tus pálpitos");
+    setMensaje("✅ ¡Datos confirmados! Ya podés cargar tus predicciones");
   }
 
   // CALCULAR ESTADÍSTICAS DE UN USUARIO
