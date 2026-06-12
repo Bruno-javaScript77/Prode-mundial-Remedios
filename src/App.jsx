@@ -413,15 +413,21 @@ function actualizarPrediccion(id, equipo, valor) {
       partido
     );
 
+    // Normalizar nombre de usuario
+    const usuarioNormalizado = prediccion.usuario.trim();
+
     if (!ramas[prediccion.rama]) {
       ramas[prediccion.rama] = {};
     }
 
-    if (!ramas[prediccion.rama][prediccion.usuario]) {
-      ramas[prediccion.rama][prediccion.usuario] = 0;
+    if (!ramas[prediccion.rama][usuarioNormalizado]) {
+      ramas[prediccion.rama][usuarioNormalizado] = { 
+        puntos: 0, 
+        usuarioOriginal: usuarioNormalizado 
+      };
     }
 
-    ramas[prediccion.rama][prediccion.usuario] += puntos;
+    ramas[prediccion.rama][usuarioNormalizado].puntos += puntos;
 
   });
 
@@ -430,9 +436,9 @@ function actualizarPrediccion(id, equipo, valor) {
   Object.keys(ramas).forEach((rama) => {
 
     resultado[rama] = Object.entries(ramas[rama])
-      .map(([usuario, puntos]) => ({
-        usuario,
-        puntos,
+      .map(([_, info]) => ({
+        usuario: info.usuarioOriginal,
+        puntos: info.puntos,
       }))
       .sort((a, b) => b.puntos - a.puntos);
 
