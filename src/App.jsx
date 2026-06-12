@@ -8,6 +8,8 @@ export default function App() {
   const [rama, setRama] = useState("");
   const [mensaje, setMensaje] = useState("");
   const [busqueda, setBusqueda] = useState("");
+  const [busquedaTablaPosiciones, setBusquedaTablaPosiciones] = useState("");
+  const [datosConfirmados, setDatosConfirmados] = useState(false);
   const [fechaSeleccionada, setFechaSeleccionada] = useState("Fecha 1");
 
   const [partidos, setPartidos] = useState([]);
@@ -165,7 +167,7 @@ async function guardarPredicciones() {
   }
 
   // Verificar si el usuario ya existe y si el PIN coincide
-  const { data: usuarioExistente } = await supabase
+  const { data: usuarioExistente, error: errorCheck } = await supabase
     .from("predicciones")
     .select("pin")
     .eq("usuario", usuario)
@@ -177,35 +179,43 @@ async function guardarPredicciones() {
     return;
   }
 
-    for (const partido of partidos) {
-      // SEGURIDAD: No guardar si el partido ya empezó
-      if (estaCerrado(partido.dia, partido.horario)) continue;
+  // Recolectar todas las predicciones a guardar antes de procesarlas
+  const prediccionesAGuardar = [];
 
-      const prediccion = predicciones[partido.id];
+  for (const partido of partidos) {
+    // SEGURIDAD: No guardar si el partido ya empezó
+    if (estaCerrado(partido.dia, partido.horario)) continue;
 
-      if (!prediccion) continue;
+    const prediccion = predicciones[partido.id];
 
-      // VALIDACIÓN: Evitar guardar si falta algún gol
-      if (prediccion.local === "" || prediccion.visitante === "" || 
-          prediccion.local === undefined || prediccion.visitante === undefined) {
-        continue; // Omitir este partido si está incompleto
-      }
+    if (!prediccion) continue;
 
-      await supabase
+    // VALIDACIÓN: Evitar guardar si falta algún gol
+    if (prediccion.local === "" || prediccion.visitante === "" || 
+        prediccion.local === undefined || prediccion.visitante === undefined) {
+      continue; // Omitir este partido si está incompleto
+    }
+
+    prediccionesAGuardar.push({
+      usuario: usuario,
+      rama: rama,
+      pin: pin,
+      partido_id: partido.id,
+      goles_local: Number(prediccion.local),
+      goles_visitante: Number(prediccion.visitante),
+    });
+  }
+
+  // Si hay predicciones a guardar, hacer un único upsert
+  if (prediccionesAGuardar.length > 0) {
+    const { error } = await supabase
       .from("predicciones")
-      .upsert(
-        [
-          {
-            usuario: usuario,
-            rama: rama,
-            pin: pin,
-            partido_id: partido.id,
-            goles_local: Number(prediccion.local),
-            goles_visitante: Number(prediccion.visitante),
-          },
-        ],
-        { onConflict: 'usuario,partido_id' }
-      );
+      .upsert(prediccionesAGuardar, { onConflict: 'usuario,partido_id' });
+
+    if (error) {
+      setMensaje("❌ Error al guardar: " + error.message);
+      return;
+    }
   }
 
   setMensaje("✅ Predicciones guardadas");
@@ -301,23 +311,44 @@ function actualizarPrediccion(id, equipo, valor) {
     setTablaPosiciones(resultado);
   }
 
+  // CONFIRMAR DATOS PERSONALES
+  function confirmarDatos() {
+    if (!usuario || !rama || !pin) {
+      setMensaje("⚠️ Completá nombre, rama y PIN");
+      return;
+    }
+
+    if (pin.length !== 4) {
+      setMensaje("⚠️ El PIN debe ser de 4 dígitos");
+      return;
+    }
+
+    setDatosConfirmados(true);
+    setMensaje("✅ ¡Datos confirmados! Ya podés cargar tus pálpitos");
+  }
+
   // CALCULAR ESTADÍSTICAS DE UN USUARIO
   function calcularEstadisticasUsuario(nombreUsuario) {
+    // Búsqueda flexible: incluye coincidencias parciales
     const prediccionesUsuario = prediccionesGuardadas.filter(
-      (p) => p.usuario.toLowerCase() === nombreUsuario.toLowerCase()
+      (p) => p.usuario.toLowerCase().includes(nombreUsuario.toLowerCase())
     );
 
     let aciertosExactos = 0;
     let aciertosResultado = 0;
-    let totalPartidos = 0;
+    let totalPartidosConResultado = 0;
+    let totalPartidosPronosticados = 0;
 
     prediccionesUsuario.forEach((prediccion) => {
       const partido = partidos.find((p) => p.id === prediccion.partido_id);
       if (!partido) return;
 
-      // Solo contar si el partido tiene resultado
+      // Contar todos los partidos pronosticados
+      totalPartidosPronosticados++;
+
+      // Si el partido tiene resultado, contar aciertos
       if (partido.goles_local !== null && partido.goles_visitante !== null) {
-        totalPartidos++;
+        totalPartidosConResultado++;
         const puntos = calcularPuntos(prediccion, partido);
         if (puntos === 3) aciertosExactos++;
         else if (puntos === 1) aciertosResultado++;
@@ -325,10 +356,10 @@ function actualizarPrediccion(id, equipo, valor) {
     });
 
     const porcentaje =
-      totalPartidos > 0
+      totalPartidosConResultado > 0
         ? Math.round(
             ((aciertosExactos * 3 + aciertosResultado * 1) /
-              (totalPartidos * 3)) *
+              (totalPartidosConResultado * 3)) *
               100
           )
         : 0;
@@ -336,7 +367,7 @@ function actualizarPrediccion(id, equipo, valor) {
     return {
       aciertosExactos,
       aciertosResultado,
-      totalPartidos,
+      totalPartidos: totalPartidosPronosticados,
       porcentaje,
     };
   }
@@ -567,6 +598,18 @@ return (
   <option value="Rovers">Rovers</option>
   <option value="Educadores">Educadores</option>
 </select>
+
+{/* BOTÓN CONFIRMAR DATOS */}
+<button
+  onClick={confirmarDatos}
+  className={`w-full p-4 rounded-2xl font-bold text-lg mb-8 transition-all ${
+    datosConfirmados
+      ? "bg-green-500/30 border-2 border-green-400 text-green-400 cursor-default"
+      : "bg-blue-500 hover:bg-blue-600 text-white shadow-lg hover:scale-[1.02]"
+  }`}
+>
+  {datosConfirmados ? "✅ Datos Confirmados" : "Confirmar Datos"}
+</button>
 
 
       {/* SELECTOR DE JORNADAS */}
@@ -883,13 +926,22 @@ return (
           </div>
         )}
 
-        <div className="overflow-x-auto rounded-2xl">
+        {/* BUSCADOR TABLA POSICIONES */}
+        <input
+          type="text"
+          placeholder="🔍 Buscar en el ranking..."
+          value={busquedaTablaPosiciones}
+          onChange={(e) => setBusquedaTablaPosiciones(e.target.value)}
+          className="w-full p-3 rounded-xl bg-white/5 border border-white/10 text-white mb-6 outline-none focus:border-green-400 transition-all"
+        />
+
+        <div className="overflow-x-auto rounded-2xl max-h-[500px] overflow-y-auto">
 
           <table className="w-full min-w-[500px]">
 
-            <thead>
+            <thead className="sticky top-0 bg-white/10 z-10">
 
-              <tr className="bg-white/10">
+              <tr>
 
                 <th className="text-left p-4">
                   Posición
@@ -913,7 +965,11 @@ return (
 
             <tbody>
 
-              {tablaPosiciones.map((jugador, index) => (
+              {tablaPosiciones
+                .filter((jugador) =>
+                  jugador.usuario.toLowerCase().includes(busquedaTablaPosiciones.toLowerCase())
+                )
+                .map((jugador, index) => (
 
                 <tr
                   key={jugador.usuario}
