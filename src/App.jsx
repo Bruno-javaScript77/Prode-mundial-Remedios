@@ -149,7 +149,17 @@ export default function App() {
     if (error) {
       console.log(error);
     } else {
-      setPrediccionesGuardadas(data);
+      // Deduplicar: mantener solo la predicción más reciente por usuario y partido
+      const deduplicadas = {};
+      data.forEach((prediccion) => {
+        const clave = `${prediccion.usuario}_${prediccion.partido_id}`;
+        if (!deduplicadas[clave]) {
+          deduplicadas[clave] = prediccion;
+        }
+      });
+      
+      const dataDeduplic = Object.values(deduplicadas);
+      setPrediccionesGuardadas(dataDeduplic);
     }
   }
 
@@ -324,7 +334,7 @@ function actualizarPrediccion(id, equipo, valor) {
     }
 
     setDatosConfirmados(true);
-    setMensaje("✅ ¡Datos confirmados! Ya podés cargar tus predicciones");
+    setMensaje("✅ ¡Datos confirmados! Ya podés cargar tus pálpitos");
   }
 
   // CALCULAR ESTADÍSTICAS DE UN USUARIO
