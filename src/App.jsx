@@ -149,10 +149,16 @@ export default function App() {
     if (error) {
       console.log(error);
     } else {
-      // Deduplicar: mantener solo la predicción más reciente por usuario y partido
+      // Normalizar nombres: trim y mantener original para display
+      const dataNormalizada = data.map(p => ({
+        ...p,
+        usuario_normalizado: p.usuario.trim()
+      }));
+
+      // Deduplicar: mantener solo la predicción más reciente por usuario normalizado y partido
       const deduplicadas = {};
-      data.forEach((prediccion) => {
-        const clave = `${prediccion.usuario}_${prediccion.partido_id}`;
+      dataNormalizada.forEach((prediccion) => {
+        const clave = `${prediccion.usuario_normalizado}_${prediccion.partido_id}`;
         if (!deduplicadas[clave]) {
           deduplicadas[clave] = prediccion;
         }
@@ -301,16 +307,23 @@ function actualizarPrediccion(id, equipo, valor) {
         partido
       );
 
-      if (!tabla[prediccion.usuario]) {
-        tabla[prediccion.usuario] = { puntos: 0, rama: prediccion.rama };
+      // Usar nombre normalizado como clave, pero guardar el original para display
+      const usuarioNormalizado = prediccion.usuario.trim();
+      
+      if (!tabla[usuarioNormalizado]) {
+        tabla[usuarioNormalizado] = { 
+          puntos: 0, 
+          rama: prediccion.rama,
+          usuarioOriginal: prediccion.usuario.trim()
+        };
       }
 
-      tabla[prediccion.usuario].puntos += puntos;
+      tabla[usuarioNormalizado].puntos += puntos;
     });
 
     const resultado = Object.entries(tabla).map(
-      ([usuario, info]) => ({
-        usuario,
+      ([_, info]) => ({
+        usuario: info.usuarioOriginal,
         puntos: info.puntos,
         rama: info.rama,
       })
