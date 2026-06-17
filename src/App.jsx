@@ -483,31 +483,44 @@ function actualizarPrediccion(id, equipo, valor) {
   // FUNCION PARA GUARDAR RESULTADOS REALES (ADMIN)
   async function guardarResultadosReales() {
     try {
+      console.log("Iniciando guardado de resultados:", resultadosReales);
       let guardados = 0;
       let errores = 0;
 
       for (const partidoId in resultadosReales) {
         const res = resultadosReales[partidoId];
-        if (res.local === "" || res.visitante === "") continue;
+        
+        // Validar que tenemos valores válidos
+        if (!res || res.local === "" || res.local === undefined || res.visitante === "" || res.visitante === undefined) {
+          console.log(`Saltando partido ${partidoId} - valores vacíos`);
+          continue;
+        }
+
+        const golesLocal = Number(res.local);
+        const golesVisitante = Number(res.visitante);
+
+        console.log(`Guardando partido ${partidoId}: ${golesLocal} - ${golesVisitante}`);
 
         const { data, error } = await supabase
           .from("partidos")
           .update({
-            goles_local: Number(res.local),
-            goles_visitante: Number(res.visitante)
+            goles_local: golesLocal,
+            goles_visitante: golesVisitante
           })
-          .eq("id", partidoId)
-          .select();
+          .eq("id", Number(partidoId));
 
         if (error) {
           console.error(`Error al guardar partido ${partidoId}:`, error);
           errores++;
         } else {
+          console.log(`Partido ${partidoId} guardado exitosamente`);
           guardados++;
         }
       }
 
-      if (errores > 0) {
+      if (guardados === 0 && errores === 0) {
+        setMensaje("⚠️ No hay resultados para guardar");
+      } else if (errores > 0) {
         setMensaje(`⚠️ Se guardaron ${guardados} resultados. ${errores} con error.`);
       } else {
         setMensaje(`✅ ${guardados} resultados guardados correctamente`);
@@ -515,11 +528,12 @@ function actualizarPrediccion(id, equipo, valor) {
 
       // Esperar un poco y luego recargar
       setTimeout(() => {
+        console.log("Recargando partidos...");
         obtenerPartidos();
-      }, 500);
+      }, 1000);
     } catch (err) {
       console.error("Error general:", err);
-      setMensaje("❌ Error al guardar resultados");
+      setMensaje("❌ Error al guardar resultados: " + err.message);
     }
   }
 
