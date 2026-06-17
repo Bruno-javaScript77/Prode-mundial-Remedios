@@ -482,20 +482,45 @@ function actualizarPrediccion(id, equipo, valor) {
 
   // FUNCION PARA GUARDAR RESULTADOS REALES (ADMIN)
   async function guardarResultadosReales() {
-    for (const partidoId in resultadosReales) {
-      const res = resultadosReales[partidoId];
-      if (res.local === "" || res.visitante === "") continue;
+    try {
+      let guardados = 0;
+      let errores = 0;
 
-      await supabase
-        .from("partidos")
-        .update({
-          goles_local: Number(res.local),
-          goles_visitante: Number(res.visitante)
-        })
-        .eq("id", partidoId);
+      for (const partidoId in resultadosReales) {
+        const res = resultadosReales[partidoId];
+        if (res.local === "" || res.visitante === "") continue;
+
+        const { data, error } = await supabase
+          .from("partidos")
+          .update({
+            goles_local: Number(res.local),
+            goles_visitante: Number(res.visitante)
+          })
+          .eq("id", partidoId)
+          .select();
+
+        if (error) {
+          console.error(`Error al guardar partido ${partidoId}:`, error);
+          errores++;
+        } else {
+          guardados++;
+        }
+      }
+
+      if (errores > 0) {
+        setMensaje(`⚠️ Se guardaron ${guardados} resultados. ${errores} con error.`);
+      } else {
+        setMensaje(`✅ ${guardados} resultados guardados correctamente`);
+      }
+
+      // Esperar un poco y luego recargar
+      setTimeout(() => {
+        obtenerPartidos();
+      }, 500);
+    } catch (err) {
+      console.error("Error general:", err);
+      setMensaje("❌ Error al guardar resultados");
     }
-    setMensaje("✅ Resultados reales guardados");
-    obtenerPartidos();
   }
 
   // INICIO
