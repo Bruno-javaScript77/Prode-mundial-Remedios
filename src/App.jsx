@@ -289,6 +289,14 @@ function actualizarPrediccion(id, equipo, valor) {
     return 0;
   }
 
+  // OBTENER PREDICCIÓN GUARDADA DE UN USUARIO
+  function obtenerPrediccionGuardada(partidoId) {
+    const prediccion = prediccionesGuardadas.find(
+      (p) => p.usuario.trim().toLowerCase() === usuario.trim().toLowerCase() && p.partido_id === partidoId
+    );
+    return prediccion ? { local: prediccion.goles_local, visitante: prediccion.goles_visitante } : null;
+  }
+
   // CALCULAR TABLA
   function calcularTabla() {
 
@@ -768,15 +776,21 @@ return (
 	
 	                {/* VS Y INPUTS DESKTOP */}
                 <div className="hidden md:flex items-center gap-4">
-                  <input
-                    type="number"
-                    min="0"
-                    disabled={cerrado}
-                    className={`w-20 p-3 rounded-2xl text-center font-bold text-lg shadow-inner ${
-                      cerrado ? "bg-slate-800 text-slate-500 cursor-not-allowed" : "bg-white text-black"
-                    }`}
-                    onChange={(e) => actualizarPrediccion(partido.id, "local", e.target.value)}
-                  />
+                  {(() => {
+                    const prediccionGuardada = obtenerPrediccionGuardada(partido.id);
+                    return (
+                      <input
+                        type="number"
+                        min="0"
+                        value={prediccionGuardada?.local || predicciones[partido.id]?.local || ""}
+                        disabled={cerrado}
+                        className={`w-20 p-3 rounded-2xl text-center font-bold text-lg shadow-inner ${
+                          cerrado ? "bg-slate-800 text-slate-500 cursor-not-allowed" : "bg-white text-black"
+                        }`}
+                        onChange={(e) => actualizarPrediccion(partido.id, "local", e.target.value)}
+                      />
+                    );
+                  })()}
 	                  <div className="flex flex-col items-center">
 	                    <span className="font-black text-xl text-slate-300">{cerrado ? "🔒" : "VS"}</span>
 	                    {partido.goles_local !== null && partido.goles_visitante !== null && (
@@ -785,29 +799,41 @@ return (
 	                      </div>
 	                    )}
 	                  </div>
-                  <input
-                    type="number"
-                    min="0"
-                    disabled={cerrado}
-                    className={`w-20 p-3 rounded-2xl text-center font-bold text-lg shadow-inner ${
-                      cerrado ? "bg-slate-800 text-slate-500 cursor-not-allowed" : "bg-white text-black"
-                    }`}
-                    onChange={(e) => actualizarPrediccion(partido.id, "visitante", e.target.value)}
-                  />
+                  {(() => {
+                    const prediccionGuardada = obtenerPrediccionGuardada(partido.id);
+                    return (
+                      <input
+                        type="number"
+                        min="0"
+                        value={prediccionGuardada?.visitante || predicciones[partido.id]?.visitante || ""}
+                        disabled={cerrado}
+                        className={`w-20 p-3 rounded-2xl text-center font-bold text-lg shadow-inner ${
+                          cerrado ? "bg-slate-800 text-slate-500 cursor-not-allowed" : "bg-white text-black"
+                        }`}
+                        onChange={(e) => actualizarPrediccion(partido.id, "visitante", e.target.value)}
+                      />
+                    );
+                  })()}
                 </div>
 
                 {/* EQUIPO VISITANTE */}
                 <div className="flex items-center gap-3 w-full md:w-40 justify-between md:justify-end">
-                  <input
-                    type="number"
-                    min="0"
-                    placeholder="0"
-                    disabled={cerrado}
-                    className={`w-14 md:w-20 p-2 md:p-3 rounded-xl text-center font-bold text-lg shadow-inner md:hidden ${
-                      cerrado ? "bg-slate-800 text-slate-500 cursor-not-allowed" : "bg-white text-black"
-                    }`}
-                    onChange={(e) => actualizarPrediccion(partido.id, "visitante", e.target.value)}
-                  />
+                  {(() => {
+                    const prediccionGuardada = obtenerPrediccionGuardada(partido.id);
+                    return (
+                      <input
+                        type="number"
+                        min="0"
+                        placeholder="0"
+                        value={prediccionGuardada?.visitante || predicciones[partido.id]?.visitante || ""}
+                        disabled={cerrado}
+                        className={`w-14 md:w-20 p-2 md:p-3 rounded-xl text-center font-bold text-lg shadow-inner md:hidden ${
+                          cerrado ? "bg-slate-800 text-slate-500 cursor-not-allowed" : "bg-white text-black"
+                        }`}
+                        onChange={(e) => actualizarPrediccion(partido.id, "visitante", e.target.value)}
+                      />
+                    );
+                  })()}
                   <div className="flex items-center gap-2">
                     <span className={`font-bold text-base md:text-lg ${cerrado ? "text-slate-500" : ""}`}>{partido.visitante}</span>
                     {codigosBanderas[partido.visitante] ? (
