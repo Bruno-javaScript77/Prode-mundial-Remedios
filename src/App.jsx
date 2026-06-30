@@ -10,7 +10,7 @@ export default function App() {
   const [busqueda, setBusqueda] = useState("");
   const [busquedaTablaPosiciones, setBusquedaTablaPosiciones] = useState("");
   const [datosConfirmados, setDatosConfirmados] = useState(false);
-  const [fechaSeleccionada, setFechaSeleccionada] = useState("16avos");
+  const [fechaSeleccionada, setFechaSeleccionada] = useState("Fecha 1");
 
   const [partidos, setPartidos] = useState([]);
   const [predicciones, setPredicciones] = useState({});
@@ -705,7 +705,10 @@ return (
         {Array.from(new Set(partidos.map((p) => p.fecha || "Sin Fecha")))
           .sort((a, b) => {
             const orden = ["Fecha 1", "Fecha 2", "Fecha 3", "16avos", "Octavos", "Cuartos", "Semis", "3er Puesto", "Final"];
-            return orden.indexOf(a) - orden.indexOf(b);
+            const indexA = orden.indexOf(a);
+            const indexB = orden.indexOf(b);
+            // Si no está en la lista, ponerlo al final
+            return (indexA === -1 ? orden.length : indexA) - (indexB === -1 ? orden.length : indexB);
           })
           .map((j) => (
             <button
