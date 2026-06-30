@@ -10,7 +10,7 @@ export default function App() {
   const [busqueda, setBusqueda] = useState("");
   const [busquedaTablaPosiciones, setBusquedaTablaPosiciones] = useState("");
   const [datosConfirmados, setDatosConfirmados] = useState(false);
-  const [fechaSeleccionada, setFechaSeleccionada] = useState("Fecha 1");
+  const [fechaSeleccionada, setFechaSeleccionada] = useState("16avos");
 
   const [partidos, setPartidos] = useState([]);
   const [predicciones, setPredicciones] = useState({});
@@ -121,7 +121,7 @@ export default function App() {
     "Uruguay": "uy",
     "Nueva Zelanda": "nz", "New Zealand": "nz",
     "Egipto": "eg", "Egypt": "eg",
-    "Arabia Saudita": "sa", "Saudi Arabia": "sa"
+    "Arabia Saudita": "sa", "Saudi Arabia": "sa", "Cabo Verde": "cv", "RD Congo": "cd", "Bosnia y Herzegovina": "ba", "Bosnia and Herzegovina": "ba"
   };
 
   // OBTENER PARTIDOS
@@ -135,6 +135,18 @@ export default function App() {
       console.log(error);
     } else {
       setPartidos(data);
+      
+      // Cargar los resultados reales en el estado del admin
+      const resultadosActuales = {};
+      data.forEach((partido) => {
+        if (partido.goles_local !== null && partido.goles_visitante !== null) {
+          resultadosActuales[partido.id] = {
+            local: partido.goles_local,
+            visitante: partido.goles_visitante
+          };
+        }
+      });
+      setResultadosReales(resultadosActuales);
     }
   }
 
@@ -691,7 +703,10 @@ return (
       {/* SELECTOR DE JORNADAS */}
       <div className="flex gap-2 overflow-x-auto pb-4 mb-8 no-scrollbar">
         {Array.from(new Set(partidos.map((p) => p.fecha || "Sin Fecha")))
-          .sort()
+          .sort((a, b) => {
+            const orden = ["Fecha 1", "Fecha 2", "Fecha 3", "16avos", "Octavos", "Cuartos", "Semis", "3er Puesto", "Final"];
+            return orden.indexOf(a) - orden.indexOf(b);
+          })
           .map((j) => (
             <button
               key={j}
