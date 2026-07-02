@@ -345,7 +345,7 @@ function actualizarPrediccion(id, equipo, valor) {
         partido
       );
 
-      // Usar nombre normalizado como clave, pero guardar el original para display
+      // Usar nombre normalizado como clave única (ignora PIN y variaciones)
       const usuarioNormalizado = normalizarNombre(prediccion.usuario);
       
       if (!tabla[usuarioNormalizado]) {
@@ -356,7 +356,13 @@ function actualizarPrediccion(id, equipo, valor) {
         };
       }
 
+      // Sumar puntos sin importar el PIN o variaciones del registro
       tabla[usuarioNormalizado].puntos += puntos;
+      
+      // Actualizar rama si es más reciente (por si cambió)
+      if (prediccion.rama) {
+        tabla[usuarioNormalizado].rama = prediccion.rama;
+      }
     });
 
     const resultado = Object.entries(tabla).map(
