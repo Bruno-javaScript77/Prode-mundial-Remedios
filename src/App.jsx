@@ -164,16 +164,36 @@ export default function App() {
   // OBTENER PREDICCIONES
   async function obtenerPredicciones() {
 
-    const { data, error } = await supabase
-      .from("predicciones")
-      .select("*")
-      .order("id", { ascending: false });
+    let allData = [];
+    let pageSize = 1000;
+    let page = 0;
+    let hasMore = true;
 
-    if (error) {
-      console.log(error);
-    } else {
+    // Paginación: obtener todos los registros sin límite
+    while (hasMore) {
+      const { data, error } = await supabase
+        .from("predicciones")
+        .select("*")
+        .order("id", { ascending: false })
+        .range(page * pageSize, (page + 1) * pageSize - 1);
+
+      if (error) {
+        console.log("Error en página " + page + ":", error);
+        break;
+      }
+
+      if (!data || data.length === 0) {
+        hasMore = false;
+      } else {
+        allData = [...allData, ...data];
+        page++;
+      }
+    }
+
+    if (allData.length > 0) {
       // Normalizar nombres: ignorar tildes, mayúsculas y espacios
-      const dataNormalizada = data.map(p => ({
+      const dataNormalizada = allData.map(p => ({
+
         ...p,
         usuario_normalizado: normalizarNombre(p.usuario)
       }));
