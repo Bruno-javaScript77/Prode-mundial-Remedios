@@ -280,6 +280,13 @@ function actualizarPrediccion(id, equipo, valor) {
   // CALCULAR PUNTOS
   function calcularPuntos(prediccion, partido) {
 
+    // Convertir a números forzosamente
+    const golesLocalReal = parseInt(partido.goles_local) || 0;
+    const golesVisitanteReal = parseInt(partido.goles_visitante) || 0;
+    const golesLocalPred = parseInt(prediccion.goles_local) || 0;
+    const golesVisitantePred = parseInt(prediccion.goles_visitante) || 0;
+
+    // Si no hay resultado real cargado, no hay puntos
     if (
       partido.goles_local === null ||
       partido.goles_visitante === null
@@ -287,21 +294,19 @@ function actualizarPrediccion(id, equipo, valor) {
       return 0;
     }
 
+    // Acierto exacto: 3 puntos
     if (
-      prediccion.goles_local === partido.goles_local &&
-      prediccion.goles_visitante === partido.goles_visitante
+      golesLocalPred === golesLocalReal &&
+      golesVisitantePred === golesVisitanteReal
     ) {
       return 3;
     }
 
-    const diferenciaPred =
-      prediccion.goles_local -
-      prediccion.goles_visitante;
+    // Calcular diferencias
+    const diferenciaPred = golesLocalPred - golesVisitantePred;
+    const diferenciaReal = golesLocalReal - golesVisitanteReal;
 
-    const diferenciaReal =
-      partido.goles_local -
-      partido.goles_visitante;
-
+    // Acierto de resultado (ganador o empate): 1 punto
     if (
       (diferenciaPred > 0 && diferenciaReal > 0) ||
       (diferenciaPred < 0 && diferenciaReal < 0) ||
@@ -310,6 +315,7 @@ function actualizarPrediccion(id, equipo, valor) {
       return 1;
     }
 
+    // Sin acierto
     return 0;
   }
 
