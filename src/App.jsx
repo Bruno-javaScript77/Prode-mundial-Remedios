@@ -167,11 +167,12 @@ export default function App() {
         usuario_normalizado: p.usuario.trim()
       }));
 
-      // Deduplicar: mantener solo la predicción más reciente por usuario normalizado y partido
+      // Deduplicar: mantener solo la predicción más reciente (ID más alto) por usuario normalizado y partido
       const deduplicadas = {};
       dataNormalizada.forEach((prediccion) => {
         const clave = `${prediccion.usuario_normalizado}_${prediccion.partido_id}`;
-        if (!deduplicadas[clave]) {
+        // Si no existe o el nuevo tiene ID más alto (más reciente), reemplazar
+        if (!deduplicadas[clave] || prediccion.id > deduplicadas[clave].id) {
           deduplicadas[clave] = prediccion;
         }
       });
