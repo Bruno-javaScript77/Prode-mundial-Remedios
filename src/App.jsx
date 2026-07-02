@@ -33,6 +33,17 @@ export default function App() {
     Educadores: "🧭",
   };
 
+  // FUNCIÓN PARA NORMALIZAR NOMBRES (ignorar tildes, mayúsculas, espacios)
+  function normalizarNombre(nombre) {
+    if (!nombre) return "";
+    return nombre
+      .trim()
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, ""); // Remover tildes
+  }
+
+
   // FUNCION PARA VERIFICAR SI EL PARTIDO ESTA CERRADO
   const estaCerrado = (diaStr, horarioStr) => {
     if (!diaStr || !horarioStr) return false;
@@ -161,10 +172,10 @@ export default function App() {
     if (error) {
       console.log(error);
     } else {
-      // Normalizar nombres: trim y mantener original para display
+      // Normalizar nombres: ignorar tildes, mayúsculas y espacios
       const dataNormalizada = data.map(p => ({
         ...p,
-        usuario_normalizado: p.usuario.trim()
+        usuario_normalizado: normalizarNombre(p.usuario)
       }));
 
       // Deduplicar: mantener solo la predicción más reciente (ID más alto) por usuario normalizado y partido
@@ -305,7 +316,7 @@ function actualizarPrediccion(id, equipo, valor) {
   // OBTENER PREDICCIÓN GUARDADA DE UN USUARIO
   function obtenerPrediccionGuardada(partidoId) {
     const prediccion = prediccionesGuardadas.find(
-      (p) => p.usuario.trim().toLowerCase() === usuario.trim().toLowerCase() && p.partido_id === partidoId
+      (p) => normalizarNombre(p.usuario) === normalizarNombre(usuario) && p.partido_id === partidoId
     );
     return prediccion ? { local: prediccion.goles_local, visitante: prediccion.goles_visitante } : null;
   }
@@ -329,7 +340,7 @@ function actualizarPrediccion(id, equipo, valor) {
       );
 
       // Usar nombre normalizado como clave, pero guardar el original para display
-      const usuarioNormalizado = prediccion.usuario.trim();
+      const usuarioNormalizado = normalizarNombre(prediccion.usuario);
       
       if (!tabla[usuarioNormalizado]) {
         tabla[usuarioNormalizado] = { 
