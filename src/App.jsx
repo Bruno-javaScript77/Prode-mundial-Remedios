@@ -395,7 +395,16 @@ function actualizarPrediccion(id, equipo, valor) {
 
     resultado.sort((a, b) => b.puntos - a.puntos);
 
-    setTablaPosiciones(resultado);
+    // Aplicar bono de 5 puntos a partir del 3er puesto para aumentar competitividad
+    const resultadoConBono = resultado.map((usuario, index) => ({
+      ...usuario,
+      puntos: index >= 2 ? usuario.puntos + 5 : usuario.puntos // Bono para puesto 3 en adelante
+    }));
+
+    // Re-ordenar después de aplicar el bono
+    resultadoConBono.sort((a, b) => b.puntos - a.puntos);
+
+    setTablaPosiciones(resultadoConBono);
   }
 
   // CONFIRMAR DATOS PERSONALES
