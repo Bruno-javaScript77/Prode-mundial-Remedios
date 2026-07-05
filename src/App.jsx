@@ -300,6 +300,8 @@ function actualizarPrediccion(id, equipo, valor) {
   // CALCULAR PUNTOS
   function calcularPuntos(prediccion, partido) {
 
+    if (!partido) return 0;
+
     // Convertir a números forzosamente
     const golesLocalReal = parseInt(partido.goles_local) || 0;
     const golesVisitanteReal = parseInt(partido.goles_visitante) || 0;
@@ -1002,6 +1004,10 @@ return (
                       const partido = partidos.find(
                         (p) => p.id === prediccion.partido_id
                       );
+
+                      // Si el partido no existe (fue eliminado de la base), saltar
+                      if (!partido) return null;
+
                       const puntos = calcularPuntos(prediccion, partido);
                       const resultadoColor =
                         puntos === 3
