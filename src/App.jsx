@@ -427,7 +427,7 @@ function actualizarPrediccion(id, equipo, valor) {
   function calcularEstadisticasUsuario(nombreUsuario) {
     // Búsqueda flexible: incluye coincidencias parciales
     const prediccionesUsuario = prediccionesGuardadas.filter(
-      (p) => p.usuario.toLowerCase().includes(nombreUsuario.toLowerCase())
+      (p) => p.usuario && p.usuario.toLowerCase().includes(nombreUsuario.toLowerCase())
     );
 
     let aciertosExactos = 0;
@@ -996,7 +996,7 @@ return (
                 <tbody>
                   {prediccionesGuardadas
                     .filter((p) =>
-                      p.usuario.toLowerCase().includes(busqueda.toLowerCase())
+                      p.usuario && p.usuario.toLowerCase().includes(busqueda.toLowerCase())
                     )
                     .map((prediccion) => {
                       const partido = partidos.find(
@@ -1139,7 +1139,7 @@ return (
 
               {tablaPosiciones
                 .filter((jugador) =>
-                  jugador.usuario.toLowerCase().includes(busquedaTablaPosiciones.toLowerCase())
+                  jugador.usuario && jugador.usuario.toLowerCase().includes(busquedaTablaPosiciones.toLowerCase())
                 )
                 .map((jugador, index) => (
 
