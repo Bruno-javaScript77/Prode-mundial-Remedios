@@ -1192,9 +1192,29 @@ return (
               <div key={partido.id} className="bg-white/5 p-4 rounded-2xl border border-white/10 flex flex-col md:flex-row justify-between items-center gap-4">
                 <div className="flex items-center gap-3 flex-1">
                   <img src={`https://flagcdn.com/w40/${codigosBanderas[partido.local] || 'un'}.png`} className="w-6 h-4 object-cover rounded-sm" alt="" />
-                  <span className="font-bold">{partido.local}</span>
+                  <input
+                    type="text"
+                    value={partido.local}
+                    onChange={(e) => {
+                      const updatedPartidos = partidos.map(p => 
+                        p.id === partido.id ? {...p, local: e.target.value} : p
+                      );
+                      setPartidos(updatedPartidos);
+                    }}
+                    className="font-bold bg-slate-900 px-2 py-1 rounded border border-yellow-500/50 text-white outline-none focus:border-yellow-400 w-32"
+                  />
                   <span className="text-slate-500 text-sm">vs</span>
-                  <span className="font-bold">{partido.visitante}</span>
+                  <input
+                    type="text"
+                    value={partido.visitante}
+                    onChange={(e) => {
+                      const updatedPartidos = partidos.map(p => 
+                        p.id === partido.id ? {...p, visitante: e.target.value} : p
+                      );
+                      setPartidos(updatedPartidos);
+                    }}
+                    className="font-bold bg-slate-900 px-2 py-1 rounded border border-yellow-500/50 text-white outline-none focus:border-yellow-400 w-32"
+                  />
                   <img src={`https://flagcdn.com/w40/${codigosBanderas[partido.visitante] || 'un'}.png`} className="w-6 h-4 object-cover rounded-sm" alt="" />
                 </div>
                 
