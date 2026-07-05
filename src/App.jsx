@@ -572,13 +572,20 @@ function actualizarPrediccion(id, equipo, valor) {
         const golesLocal = Number(res.local);
         const golesVisitante = Number(res.visitante);
 
-        console.log(`Guardando partido ${partidoId}: ${golesLocal} - ${golesVisitante}`);
+        // Obtener los nombres de los equipos del estado actual de partidos
+        const partidoActual = partidos.find(p => p.id === Number(partidoId));
+        const equipoLocal = partidoActual?.local || "";
+        const equipoVisitante = partidoActual?.visitante || "";
+
+        console.log(`Guardando partido ${partidoId}: ${equipoLocal} ${golesLocal} - ${golesVisitante} ${equipoVisitante}`);
 
         const { data, error } = await supabase
           .from("partidos")
           .update({
             goles_local: golesLocal,
-            goles_visitante: golesVisitante
+            goles_visitante: golesVisitante,
+            local: equipoLocal,
+            visitante: equipoVisitante
           })
           .eq("id", Number(partidoId));
 
