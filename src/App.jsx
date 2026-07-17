@@ -300,8 +300,6 @@ function actualizarPrediccion(id, equipo, valor) {
   // CALCULAR PUNTOS
   function calcularPuntos(prediccion, partido) {
 
-    if (!partido) return 0;
-
     // Convertir a números forzosamente
     const golesLocalReal = parseInt(partido.goles_local) || 0;
     const golesVisitanteReal = parseInt(partido.goles_visitante) || 0;
@@ -398,10 +396,25 @@ function actualizarPrediccion(id, equipo, valor) {
     resultado.sort((a, b) => b.puntos - a.puntos);
 
     // Aplicar bono de 5 puntos a partir del 3er puesto para aumentar competitividad
-    const resultadoConBono = resultado.map((usuario, index) => ({
-      ...usuario,
-      puntos: index >= 2 ? usuario.puntos + 5 : usuario.puntos // Bono para puesto 3 en adelante
-    }));
+    // Y aplicar bonos manuales específicos solicitados por el administrador
+    const resultadoConBono = resultado.map((usuario, index) => {
+      let puntosExtra = index >= 2 ? 5 : 0;
+      
+      // Bono manual para Gastón Soengas '10' (+3 pts)
+      if (normalizarNombre(usuario.usuario) === normalizarNombre("Gastón Soengas '10'")) {
+        puntosExtra += 3;
+      }
+      
+      // Bono manual para La chula (+15 pts)
+      if (normalizarNombre(usuario.usuario) === normalizarNombre("La chula")) {
+        puntosExtra += 15;
+      }
+
+      return {
+        ...usuario,
+        puntos: usuario.puntos + puntosExtra
+      };
+    });
 
     // Re-ordenar después de aplicar el bono
     resultadoConBono.sort((a, b) => b.puntos - a.puntos);
@@ -429,7 +442,7 @@ function actualizarPrediccion(id, equipo, valor) {
   function calcularEstadisticasUsuario(nombreUsuario) {
     // Búsqueda flexible: incluye coincidencias parciales
     const prediccionesUsuario = prediccionesGuardadas.filter(
-      (p) => p.usuario && p.usuario.toLowerCase().includes(nombreUsuario.toLowerCase())
+      (p) => p.usuario.toLowerCase().includes(nombreUsuario.toLowerCase())
     );
 
     let aciertosExactos = 0;
@@ -998,16 +1011,12 @@ return (
                 <tbody>
                   {prediccionesGuardadas
                     .filter((p) =>
-                      p.usuario && p.usuario.toLowerCase().includes(busqueda.toLowerCase())
+                      p.usuario.toLowerCase().includes(busqueda.toLowerCase())
                     )
                     .map((prediccion) => {
                       const partido = partidos.find(
                         (p) => p.id === prediccion.partido_id
                       );
-
-                      // Si el partido no existe (fue eliminado de la base), saltar
-                      if (!partido) return null;
-
                       const puntos = calcularPuntos(prediccion, partido);
                       const resultadoColor =
                         puntos === 3
@@ -1145,7 +1154,7 @@ return (
 
               {tablaPosiciones
                 .filter((jugador) =>
-                  jugador.usuario && jugador.usuario.toLowerCase().includes(busquedaTablaPosiciones.toLowerCase())
+                  jugador.usuario.toLowerCase().includes(busquedaTablaPosiciones.toLowerCase())
                 )
                 .map((jugador, index) => (
 
