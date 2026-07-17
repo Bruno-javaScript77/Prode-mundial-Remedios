@@ -405,9 +405,9 @@ function actualizarPrediccion(id, equipo, valor) {
         puntosExtra += 3;
       }
       
-      // Bono manual para La chula (+15 pts)
+      // Bono manual para La chula (+30 pts totales)
       if (normalizarNombre(usuario.usuario) === normalizarNombre("La chula")) {
-        puntosExtra += 15;
+        puntosExtra += 30;
       }
 
       return {
